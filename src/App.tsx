@@ -31,8 +31,10 @@ const categories: { id: Category | 'quiz'; label: string; icon: string; descript
   { id: 'speaking', label: 'Speaking', icon: '🎙️', description: 'Practise confident phrases' }
 ];
 
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
+  const response = await fetch(`${API_BASE}${url}`, {
     ...options,
     headers: { 'Content-Type': 'application/json', ...options?.headers }
   });

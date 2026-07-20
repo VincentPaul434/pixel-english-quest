@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { request } from './api';
-import { PixelIcon } from './PixelIcon';
-import type { Category, Lesson, Question, QuestionType, TeacherCourse, TeacherDashboardData } from './types';
+import { PixelIcon } from '../../components/PixelIcon';
+import { request } from '../../services/api';
+import type { Category, Lesson, Question, QuestionType, TeacherCourse, TeacherDashboardData } from '../../types/academy';
 
 type DraftQuestion = Question & { answer: number | string };
 

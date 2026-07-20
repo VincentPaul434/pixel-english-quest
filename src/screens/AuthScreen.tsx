@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { request, setToken } from './api';
-import { PixelIcon } from './PixelIcon';
-import pixelWizard from './assets/pixel-wizard.png';
-import type { Role, User } from './types';
+import { PixelIcon } from '../components/PixelIcon';
+import { request, setToken } from '../services/api';
+import pixelWizard from '../assets/pixel-wizard.png';
+import type { Role, User } from '../types/academy';
 
 type AuthResponse = { token: string; expiresAt: string; user: User };
 

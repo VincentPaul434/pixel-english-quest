@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { AuthScreen } from './AuthScreen';
-import { getToken, request, setToken } from './api';
-import { PixelIcon } from './PixelIcon';
-import { StudentWorkspace } from './StudentWorkspace';
-import { TeacherWorkspace } from './TeacherWorkspace';
-import type { User } from './types';
+import { PixelIcon } from './components/PixelIcon';
+import { AuthScreen } from './screens/AuthScreen';
+import { StudentWorkspace } from './screens/StudentWorkspace';
+import { TeacherWorkspace } from './screens/TeacherWorkspace';
+import { getToken, request, setToken } from './services/api';
+import type { User } from './types/academy';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);

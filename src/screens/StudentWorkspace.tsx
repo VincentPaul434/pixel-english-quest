@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { request } from './api';
-import { PixelIcon, type PixelIconName } from './PixelIcon';
-import pixelWizard from './assets/pixel-wizard.png';
+import { PixelIcon, type PixelIconName } from '../components/PixelIcon';
+import { request } from '../services/api';
+import pixelWizard from '../assets/pixel-wizard.png';
 import type {
   Category,
   Lesson,
@@ -11,7 +11,7 @@ import type {
   StudentDashboardData,
   User,
   VocabularyItem
-} from './types';
+} from '../types/academy';
 
 const categoryDetails: Record<Category, { label: string; icon: PixelIconName; description: string }> = {
   reading: { label: 'Reading', icon: 'book', description: 'Read and understand magical stories' },

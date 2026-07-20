@@ -1,9 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { request } from './api';
-import { LessonEditor } from './LessonEditor';
-import { PixelIcon, type PixelIconName } from './PixelIcon';
-import pixelWizard from './assets/pixel-wizard.png';
-import type { LessonAnalytics, TeacherCourse, TeacherDashboardData, User } from './types';
+import { PixelIcon, type PixelIconName } from '../components/PixelIcon';
+import { LessonEditor } from '../features/lessons/LessonEditor';
+import { request } from '../services/api';
+import pixelWizard from '../assets/pixel-wizard.png';
+import type { LessonAnalytics, TeacherCourse, TeacherDashboardData, User } from '../types/academy';
 
 type TeacherTab = 'overview' | 'content' | 'students' | 'assignments';
 

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { PixelIcon } from './components/PixelIcon';
-import { AuthScreen } from './screens/AuthScreen';
-import { StudentWorkspace } from './screens/StudentWorkspace';
-import { TeacherWorkspace } from './screens/TeacherWorkspace';
+import { AuthScreen } from './pages/AuthScreen';
+import { StudentWorkspace } from './pages/StudentWorkspace';
+import { TeacherWorkspace } from './pages/TeacherWorkspace';
 import { getToken, request, setToken } from './services/api';
 import type { User } from './types/academy';
 

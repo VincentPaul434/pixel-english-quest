@@ -1,0 +1,51 @@
+import { request } from '../../../services/api';
+import type { Lesson, LessonResult, QuickQuestion, StudentDashboardData, VocabularyItem } from '../../academy/models/types';
+import type { QuickQuizSubmitResult, SpeechAttemptResult } from './types';
+
+export function getStudentDashboard() {
+  return request<StudentDashboardData>('/api/dashboard');
+}
+
+export function updateProfile(payload: { name: string; proficiency: string; learningGoal: string; dailyGoal: number }) {
+  return request<StudentDashboardData>('/api/profile', { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export function resetProgress() {
+  return request<StudentDashboardData>('/api/reset', { method: 'POST' });
+}
+
+export function getLesson(lessonId: string) {
+  return request<Lesson>(`/api/lessons/${lessonId}`);
+}
+
+export function saveLessonCheckpoint(lessonId: string, payload: { lastQuestion: number; draftAnswers: Array<number | string> }) {
+  return request(`/api/lessons/${lessonId}/checkpoint`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export function saveLessonStudy(lessonId: string, payload: { notes: string; bookmarked: boolean }) {
+  return request(`/api/lessons/${lessonId}/study`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export function completeLesson(lessonId: string, payload: { answers: Array<number | string>; durationSeconds: number }) {
+  return request<LessonResult>(`/api/lessons/${lessonId}/complete`, { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function submitSpeakingAttempt(lessonId: string, transcript: string) {
+  return request<SpeechAttemptResult>(`/api/lessons/${lessonId}/speaking-attempt`, { method: 'POST', body: JSON.stringify({ transcript }) });
+}
+
+export function getQuickQuiz() {
+  return request<QuickQuestion>('/api/quick-quiz');
+}
+
+export function submitQuickQuiz(questionId: string, answer: number) {
+  return request<QuickQuizSubmitResult>('/api/quick-quiz/submit', { method: 'POST', body: JSON.stringify({ questionId, answer }) });
+}
+
+export function addVocabulary(payload: { term: string; definition: string }) {
+  return request<VocabularyItem>('/api/vocabulary', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function deleteVocabulary(id: string) {
+  return request(`/api/vocabulary/${id}`, { method: 'DELETE' });
+}

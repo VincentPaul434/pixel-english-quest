@@ -1,35 +1,12 @@
-import { useEffect, useState } from 'react';
-import { PixelIcon } from './components/PixelIcon';
-import { AuthScreen } from './pages/AuthScreen';
-import { StudentWorkspace } from './pages/StudentWorkspace';
-import { TeacherWorkspace } from './pages/TeacherWorkspace';
-import { getToken, request, setToken } from './services/api';
-import type { User } from './types/academy';
+import { AcademyRoutes } from './routes';
+import { PixelIcon } from './shared-components/PixelIcon';
+import { useAcademySession } from './features/session';
 
 function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(Boolean(getToken()));
-
-  useEffect(() => {
-    const unauthorized = () => { setToken(''); setUser(null); setLoading(false); };
-    window.addEventListener('academy:unauthorized', unauthorized);
-    if (getToken()) {
-      request<User>('/api/me').then(setUser).catch(() => { setToken(''); setUser(null); }).finally(() => setLoading(false));
-    }
-    return () => window.removeEventListener('academy:unauthorized', unauthorized);
-  }, []);
-
-  const logout = async () => {
-    try { await request('/api/auth/logout', { method: 'POST' }); } catch { /* Clear the local session even if the server is unavailable. */ }
-    setToken('');
-    setUser(null);
-  };
+  const { user, loading, setUser, logout } = useAcademySession();
 
   if (loading) return <main className="loading-screen"><PixelIcon className="loading-rune" name="sparkle" size={58} /><p>Restoring your academy session...</p></main>;
-  if (!user) return <AuthScreen onAuthenticated={setUser} />;
-  return user.role === 'teacher'
-    ? <TeacherWorkspace initialUser={user} onLogout={() => void logout()} />
-    : <StudentWorkspace initialUser={user} onLogout={() => void logout()} />;
+  return <AcademyRoutes user={user} onAuthenticated={setUser} onLogout={() => void logout()} />;
 }
 
 export default App;

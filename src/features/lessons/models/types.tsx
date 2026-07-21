@@ -32,7 +32,6 @@ export type LessonEditorViewProps = {
   lessonId: string | null;
   initialCourseId: string;
   onClose: () => void;
-  onSaved: (dashboard: TeacherDashboardData) => void;
   notify: (message: string) => void;
 };
 

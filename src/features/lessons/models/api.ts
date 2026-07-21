@@ -1,10 +1,5 @@
 import { request } from '../../../services/api';
-import type { Lesson } from '../../academy/models/types';
 import type { LessonEditorSaveResponse, LessonForm, LessonSaveStatus } from './types';
-
-export function getLesson(lessonId: string) {
-  return request<Lesson>(`/api/lessons/${lessonId}`);
-}
 
 export function saveLesson(lessonId: string | null, form: LessonForm, status: LessonSaveStatus) {
   const payload = {

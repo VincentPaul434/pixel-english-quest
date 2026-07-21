@@ -1,4 +1,4 @@
-import { getToken, request, setToken } from '../../../services/api';
+import { getToken, request, setToken, type ApiSuccess } from '../../../services/api';
 import type { User } from '../../academy/models/types';
 
 export function hasSessionToken() {
@@ -9,10 +9,10 @@ export function clearSessionToken() {
   setToken('');
 }
 
-export function restoreSession() {
-  return request<User>('/api/me');
+export function restoreSession(signal?: AbortSignal) {
+  return request<User>('/api/me', { signal });
 }
 
 export function logoutSession() {
-  return request('/api/auth/logout', { method: 'POST' });
+  return request<ApiSuccess>('/api/auth/logout', { method: 'POST' });
 }

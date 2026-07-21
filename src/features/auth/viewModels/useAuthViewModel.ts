@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import type { Role } from '../../academy/models/types';
-import { authenticate, confirmPasswordReset, requestPasswordReset } from '../models/api';
+import { useAuthenticateMutation, useConfirmPasswordResetMutation, useRequestPasswordResetMutation } from '../../../hooks/mutations/sessionMutations';
 import type { AuthMode, AuthViewModel, AuthViewProps } from '../models/types';
 
 export function useAuthViewModel({ onAuthenticated }: AuthViewProps): AuthViewModel {
@@ -10,18 +10,18 @@ export function useAuthViewModel({ onAuthenticated }: AuthViewProps): AuthViewMo
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [teacherInviteCode, setTeacherInviteCode] = useState('');
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const authenticateMutation = useAuthenticateMutation();
+  const requestResetMutation = useRequestPasswordResetMutation();
+  const confirmResetMutation = useConfirmPasswordResetMutation();
+  const busy = authenticateMutation.isPending || requestResetMutation.isPending || confirmResetMutation.isPending;
 
   const authenticateUser = async (payload: Record<string, string>, endpoint: string) => {
-    setBusy(true);
     setError('');
     try {
-      onAuthenticated(await authenticate(payload, endpoint));
+      onAuthenticated(await authenticateMutation.mutateAsync({ payload, endpoint }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not enter the academy.');
-    } finally {
-      setBusy(false);
     }
   };
 
@@ -48,19 +48,18 @@ export function useAuthViewModel({ onAuthenticated }: AuthViewProps): AuthViewMo
   const forgotPassword = async () => {
     const accountEmail = window.prompt('Enter the email address for your account', email);
     if (!accountEmail) return;
-    setBusy(true); setError('');
+    setError('');
     try {
-      const result = await requestPasswordReset(accountEmail);
+      const result = await requestResetMutation.mutateAsync(accountEmail);
       if (!result.developmentToken) {
         setError('If the account exists, reset instructions were sent by email.');
         return;
       }
       const password = window.prompt('Development mode: enter a new password (8+ characters with a letter and number)');
       if (!password) return;
-      await confirmPasswordReset(result.developmentToken, password);
+      await confirmResetMutation.mutateAsync({ token: result.developmentToken, password });
       setError('Password updated. You can sign in now.');
     } catch (err) { setError(err instanceof Error ? err.message : 'Could not reset the password.'); }
-    finally { setBusy(false); }
   };
 
   return {

@@ -1,4 +1,4 @@
-import { request, setToken } from '../../../services/api';
+import { request, setToken, type ApiSuccess } from '../../../services/api';
 import type { AuthResponse } from './types';
 
 export async function authenticate(payload: Record<string, string>, endpoint: string) {
@@ -12,5 +12,5 @@ export function requestPasswordReset(email: string) {
 }
 
 export function confirmPasswordReset(token: string, password: string) {
-  return request('/api/auth/password-reset/confirm', { method: 'POST', body: JSON.stringify({ token, password }) });
+  return request<ApiSuccess>('/api/auth/password-reset/confirm', { method: 'POST', body: JSON.stringify({ token, password }) });
 }

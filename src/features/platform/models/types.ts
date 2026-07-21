@@ -5,6 +5,9 @@ export type CalendarEvent = { id: string; courseId: string | null; classroomId: 
 export type Discussion = { id: string; courseId: string; courseTitle?: string; parentId: string | null; body: string; createdAt: string; authorId: string; authorName: string };
 export type CatalogCourse = { id: string; title: string; description: string; difficulty: string; enrollmentMode: string; teacherName: string; lessonCount: number; studentCount: number; enrolled: boolean };
 export type Classroom = { id: string; name: string; code: string; courseId: string; courseTitle: string; teacherName?: string; startsAt: string | null; endsAt: string | null; studentCount?: number };
+export type ClassroomInvitation = { id: string; code: string; classroomId: string; classroomName: string; assignmentId: string | null; assignmentTitle: string | null; approvalRequired: boolean; usageLimit: number | null; usesCount: number; expiresAt: string | null; revokedAt: string | null; createdAt: string };
+export type InvitationPreview = { id: string; code: string; classroomId: string; classroomName: string; courseId: string; courseTitle: string; teacherName: string; assignmentId: string | null; assignmentTitle: string | null; approvalRequired: boolean; usageLimit: number | null; usesCount: number; expiresAt: string | null; state: 'available' | 'pending' | 'accepted' | 'rejected' | 'expired' | 'revoked' };
+export type JoinRequest = { id: string; invitationId: string; studentId: string; studentName: string; studentEmail: string; classroomId: string; classroomName: string; assignmentTitle: string | null; status: 'pending' | 'accepted' | 'rejected'; requestedAt: string; resolvedAt: string | null };
 export type Submission = { id: string; assignmentId: string; assignmentTitle: string; courseTitle: string; studentId?: string; studentName?: string; studentEmail?: string; textContent: string; attachmentUrl: string | null; status: string; score: number | null; maxScore: number; feedback: string; submittedAt: string; gradedAt: string | null; attemptNumber: number };
 export type Certificate = { id: string; courseId: string; courseTitle: string; verificationCode: string; issuedAt: string };
 export type QuestionBankItem = { id: string; prompt: string; type: string; choices: unknown[]; answer: unknown; explanation: string; tags: string[]; createdAt: string };
@@ -25,10 +28,13 @@ export type PlatformData = {
   submissions: Submission[];
   certificates?: Certificate[];
   rosters?: Array<{ classroomId: string; students: TeacherStudent[] }>;
+  invitations?: ClassroomInvitation[];
+  joinRequests?: JoinRequest[];
+  invitationStates?: Array<{ id: string; code: string; classroomId: string; classroomName: string; courseTitle: string; teacherName: string; expiresAt: string | null; revokedAt: string | null; status: 'pending' | 'accepted' | 'rejected'; requestedAt: string; resolvedAt: string | null }>;
   questionBank?: QuestionBankItem[];
   lessonVersions?: Array<{ id: string; lessonId: string; lessonTitle: string; version: number; createdAt: string }>;
   admin?: AdminData['summary'];
 };
 
 export type StudentLearningHubProps = { courses: Array<{ id: string; title: string }>; assignments: Assignment[]; notify: (message: string) => void };
-export type TeacherOperationsProps = { courses: TeacherCourse[]; students: TeacherStudent[]; user: User; notify: (message: string) => void };
+export type TeacherOperationsProps = { courses: TeacherCourse[]; students: TeacherStudent[]; assignments: Array<{ id: string; title: string; courseId: string }>; user: User; notify: (message: string) => void };

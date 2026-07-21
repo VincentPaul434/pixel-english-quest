@@ -249,7 +249,6 @@ export function TeacherWorkspaceView(props: TeacherWorkspaceViewProps) {
     setAnalytics,
     setAssignment,
     setCourseForm,
-    setData,
     setEditor,
     setMenuOpen,
     setTab,
@@ -285,13 +284,13 @@ export function TeacherWorkspaceView(props: TeacherWorkspaceViewProps) {
         {tab === 'content' && <ContentView data={data} actions={contentActions} />}
         {tab === 'students' && <StudentsView data={data} />}
         {tab === 'assignments' && <AssignmentsView data={data} setTab={setTab} />}
-        {tab === 'operations' && <TeacherOperations courses={data.courses} students={data.students} user={data.profile} notify={notify} />}
+        {tab === 'operations' && <TeacherOperations courses={data.courses} students={data.students} assignments={data.assignments} user={data.profile} notify={notify} />}
       </main>
 
-      {courseForm && <CourseForm onClose={() => setCourseForm(false)} onSaved={setData} notify={notify} />}
-      {announcementForm && <AnnouncementForm courses={data.courses} onClose={() => setAnnouncementForm(false)} onSaved={setData} notify={notify} />}
-      {editor && <LessonEditor courses={data.courses} lessonId={editor.lessonId} initialCourseId={editor.courseId} onClose={() => setEditor(null)} onSaved={setData} notify={notify} />}
-      {assignment && <AssignmentForm course={assignment.course} lessonId={assignment.lessonId} students={data.students} onClose={() => setAssignment(null)} onSaved={setData} notify={notify} />}
+      {courseForm && <CourseForm onClose={() => setCourseForm(false)} notify={notify} />}
+      {announcementForm && <AnnouncementForm courses={data.courses} onClose={() => setAnnouncementForm(false)} notify={notify} />}
+      {editor && <LessonEditor courses={data.courses} lessonId={editor.lessonId} initialCourseId={editor.courseId} onClose={() => setEditor(null)} notify={notify} />}
+      {assignment && <AssignmentForm course={assignment.course} lessonId={assignment.lessonId} students={data.students} onClose={() => setAssignment(null)} notify={notify} />}
       {analytics && <AnalyticsView analytics={analytics} onClose={() => setAnalytics(null)} />}
       {toast && <div className="toast" role="status"><PixelIcon name="sparkle" /> {toast}</div>}
     </div>

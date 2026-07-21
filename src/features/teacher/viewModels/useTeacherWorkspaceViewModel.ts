@@ -1,25 +1,35 @@
-import { useEffect, useState } from 'react';
-import type { LessonAnalytics, TeacherCourse, TeacherDashboardData } from '../../academy/models/types';
-import { archiveLesson, createModule, getLessonAnalytics, getTeacherDashboard, publishLesson, updateCourseStatus } from '../models/api';
+import { useCallback, useEffect, useState } from 'react';
+import type { LessonAnalytics, TeacherCourse } from '../../academy/models/types';
 import type { AssignmentTarget, LessonEditorTarget, TeacherTab, TeacherWorkspaceViewModel, TeacherWorkspaceViewProps } from '../models/types';
-import { duplicateLesson, reorderLessons } from '../../platform/models/api';
+import {
+  useArchiveLessonMutation, useCreateModuleMutation, useDuplicateLessonMutation, usePublishLessonMutation,
+  useReorderLessonsMutation, useUpdateCourseStatusMutation
+} from '../../../hooks/mutations/teacherMutations';
+import { useLessonAnalyticsQuery, useTeacherDashboardQuery } from '../../../hooks/queries/teacherQueries';
 
-export function useTeacherWorkspaceViewModel({ onLogout }: TeacherWorkspaceViewProps): TeacherWorkspaceViewModel {
-  const [data, setData] = useState<TeacherDashboardData | null>(null);
-  const [tab, setTab] = useState<TeacherTab>('overview');
+export function useTeacherWorkspaceViewModel({ onLogout, page, onNavigate }: TeacherWorkspaceViewProps): TeacherWorkspaceViewModel {
+  const dashboardQuery = useTeacherDashboardQuery();
+  const createModuleMutation = useCreateModuleMutation();
+  const updateCourseMutation = useUpdateCourseStatusMutation();
+  const publishLessonMutation = usePublishLessonMutation();
+  const archiveLessonMutation = useArchiveLessonMutation();
+  const duplicateLessonMutation = useDuplicateLessonMutation();
+  const reorderLessonsMutation = useReorderLessonsMutation();
+  const data = dashboardQuery.data ?? null;
+  const tab: TeacherTab = page === 'dashboard' ? 'overview' : page === 'courses' ? 'content' : page;
+  const setTab = (nextTab: TeacherTab) => onNavigate(`/teacher/${nextTab === 'overview' ? 'dashboard' : nextTab === 'content' ? 'courses' : nextTab}`);
   const [menuOpen, setMenuOpen] = useState(false);
   const [courseForm, setCourseForm] = useState(false);
   const [announcementForm, setAnnouncementForm] = useState(false);
   const [editor, setEditor] = useState<LessonEditorTarget | null>(null);
   const [assignment, setAssignment] = useState<AssignmentTarget | null>(null);
-  const [analytics, setAnalytics] = useState<LessonAnalytics | null>(null);
+  const [analyticsId, setAnalyticsId] = useState<string | null>(null);
+  const analyticsQuery = useLessonAnalyticsQuery(analyticsId);
+  const analytics = analyticsQuery.data ?? null;
+  const setAnalytics = (value: LessonAnalytics | null) => setAnalyticsId(value?.lesson.id ?? null);
   const [toast, setToast] = useState('');
-  const [error, setError] = useState('');
-  const notify = (message: string) => setToast(message);
-
-  useEffect(() => {
-    getTeacherDashboard().then(setData).catch((err) => setError(err instanceof Error ? err.message : 'Could not load the teacher workspace.'));
-  }, []);
+  const error = dashboardQuery.error instanceof Error ? dashboardQuery.error.message : '';
+  const notify = useCallback((message: string) => setToast(message), []);
 
   useEffect(() => {
     if (!toast) return;
@@ -27,11 +37,15 @@ export function useTeacherWorkspaceViewModel({ onLogout }: TeacherWorkspaceViewP
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  useEffect(() => {
+    if (analyticsQuery.error) notify(analyticsQuery.error instanceof Error ? analyticsQuery.error.message : 'Could not load analytics.');
+  }, [analyticsQuery.error, notify]);
+
   const addModule = async (course: TeacherCourse) => {
     const title = window.prompt('Module title');
     if (!title?.trim()) return;
     try {
-      setData(await createModule(course.id, title));
+      await createModuleMutation.mutateAsync({ courseId: course.id, title });
       notify('Module added.');
     } catch (err) {
       notify(err instanceof Error ? err.message : 'Could not add the module.');
@@ -40,7 +54,7 @@ export function useTeacherWorkspaceViewModel({ onLogout }: TeacherWorkspaceViewP
 
   const updateCourse = async (course: TeacherCourse, status: TeacherCourse['status']) => {
     try {
-      setData(await updateCourseStatus(course, status));
+      await updateCourseMutation.mutateAsync({ course, status });
       notify(status === 'published' ? 'Course published and learners enrolled.' : 'Course updated.');
     } catch (err) {
       notify(err instanceof Error ? err.message : 'Could not update the course.');
@@ -49,7 +63,7 @@ export function useTeacherWorkspaceViewModel({ onLogout }: TeacherWorkspaceViewP
 
   const publishTeacherLesson = async (id: string) => {
     try {
-      setData(await publishLesson(id));
+      await publishLessonMutation.mutateAsync(id);
       notify('Lesson published.');
     } catch (err) {
       notify(err instanceof Error ? err.message : 'Could not publish the lesson.');
@@ -59,7 +73,7 @@ export function useTeacherWorkspaceViewModel({ onLogout }: TeacherWorkspaceViewP
   const archiveTeacherLesson = async (id: string) => {
     if (!window.confirm('Archive this lesson? Existing attempt records will remain available.')) return;
     try {
-      setData(await archiveLesson(id));
+      await archiveLessonMutation.mutateAsync(id);
       notify('Lesson archived.');
     } catch (err) {
       notify(err instanceof Error ? err.message : 'Could not archive the lesson.');
@@ -67,17 +81,12 @@ export function useTeacherWorkspaceViewModel({ onLogout }: TeacherWorkspaceViewP
   };
 
   const openAnalytics = async (id: string) => {
-    try {
-      setAnalytics(await getLessonAnalytics(id));
-    } catch (err) {
-      notify(err instanceof Error ? err.message : 'Could not load analytics.');
-    }
+    setAnalyticsId(id);
   };
 
   const duplicateTeacherLesson = async (id: string) => {
     try {
-      await duplicateLesson(id);
-      setData(await getTeacherDashboard());
+      await duplicateLessonMutation.mutateAsync(id);
       notify('Lesson duplicated as a draft.');
     } catch (err) { notify(err instanceof Error ? err.message : 'Could not duplicate the lesson.'); }
   };
@@ -88,7 +97,7 @@ export function useTeacherWorkspaceViewModel({ onLogout }: TeacherWorkspaceViewP
     if (index < 0 || destination < 0 || destination >= course.lessons.length) return;
     const lessonIds = course.lessons.map((lesson) => lesson.id);
     [lessonIds[index], lessonIds[destination]] = [lessonIds[destination], lessonIds[index]];
-    try { await reorderLessons(course.id, lessonIds); setData(await getTeacherDashboard()); notify('Lesson order updated.'); }
+    try { await reorderLessonsMutation.mutateAsync({ courseId: course.id, lessonIds }); notify('Lesson order updated.'); }
     catch (err) { notify(err instanceof Error ? err.message : 'Could not reorder lessons.'); }
   };
 
@@ -125,7 +134,6 @@ export function useTeacherWorkspaceViewModel({ onLogout }: TeacherWorkspaceViewP
     setEditor,
     setAssignment,
     setAnalytics,
-    setData,
     notify,
     onLogout
   };

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Lesson, QuestionType, TeacherCourse } from '../../academy/models/types';
-import { getLesson, saveLesson } from '../models/api';
+import { useSaveLessonMutation } from '../../../hooks/mutations/teacherMutations';
+import { useLessonQuery } from '../../../hooks/queries/studentQueries';
 import type { DraftQuestion, LessonEditorSubmitEvent, LessonEditorViewModel, LessonEditorViewProps, LessonForm, LessonSaveStatus } from '../models/types';
 
 function blankQuestion(): DraftQuestion {
@@ -66,26 +67,31 @@ function formFromLesson(lesson: Lesson): LessonForm {
 }
 
 export function useLessonEditorViewModel(props: LessonEditorViewProps): LessonEditorViewModel {
-  const { courses, lessonId, initialCourseId, onClose, onSaved, notify } = props;
+  const { courses, lessonId, initialCourseId, onClose, notify } = props;
   const firstCourse = courses.find((course) => course.id === initialCourseId) || courses[0];
   const [form, setForm] = useState<LessonForm>(() => defaultForm(firstCourse));
-  const [loading, setLoading] = useState(Boolean(lessonId));
-  const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState(false);
-  const [error, setError] = useState('');
+  const lessonQuery = useLessonQuery(lessonId || '');
+  const saveMutation = useSaveLessonMutation();
+  const initializedLessonId = useRef('');
+  const reportedError = useRef<unknown>(null);
+  const loading = Boolean(lessonId) && lessonQuery.isPending;
+  const busy = saveMutation.isPending;
+  const error = saveMutation.error instanceof Error ? saveMutation.error.message : '';
 
   const selectedCourse = useMemo(() => courses.find((course) => course.id === form.courseId) || firstCourse, [courses, firstCourse, form.courseId]);
 
   useEffect(() => {
-    if (!lessonId) return;
-    getLesson(lessonId)
-      .then((lesson) => setForm(formFromLesson(lesson)))
-      .catch((err) => {
-        notify(err instanceof Error ? err.message : 'Could not open the lesson editor.');
-        onClose();
-      })
-      .finally(() => setLoading(false));
-  }, [lessonId, notify, onClose]);
+    if (lessonQuery.data && initializedLessonId.current !== lessonQuery.data.id) {
+      initializedLessonId.current = lessonQuery.data.id;
+      setForm(formFromLesson(lessonQuery.data));
+    }
+    if (lessonQuery.error && reportedError.current !== lessonQuery.error) {
+      reportedError.current = lessonQuery.error;
+      notify(lessonQuery.error instanceof Error ? lessonQuery.error.message : 'Could not open the lesson editor.');
+      onClose();
+    }
+  }, [lessonQuery.data, lessonQuery.error, notify, onClose]);
 
   useEffect(() => {
     const close = (event: KeyboardEvent) => event.key === 'Escape' && !busy && onClose();
@@ -117,16 +123,12 @@ export function useLessonEditorViewModel(props: LessonEditorViewProps): LessonEd
 
   const save = (event: LessonEditorSubmitEvent, status: LessonSaveStatus) => {
     event.preventDefault();
-    setBusy(true);
-    setError('');
-    void saveLesson(lessonId, form, status)
-      .then((result) => {
-        onSaved(result.dashboard);
+    void saveMutation.mutateAsync({ lessonId, form, status })
+      .then(() => {
         notify(status === 'published' ? 'Lesson published and ready for learners.' : 'Lesson draft saved.');
         onClose();
       })
-      .catch((err) => setError(err instanceof Error ? err.message : 'Could not save the lesson.'))
-      .finally(() => setBusy(false));
+      .catch(() => undefined);
   };
 
   return {

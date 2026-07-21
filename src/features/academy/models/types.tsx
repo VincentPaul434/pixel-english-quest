@@ -215,6 +215,7 @@ export interface TeacherDashboardData {
   assignments: Array<{
     id: string;
     title: string;
+    courseId: string;
     dueAt: string | null;
     lessonTitle: string;
     courseTitle: string;

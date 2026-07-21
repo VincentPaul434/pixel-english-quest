@@ -29,11 +29,6 @@ export function useStudentWorkspaceViewModel(_props?: StudentWorkspaceViewProps)
   const lessons = useMemo(() => data?.lessons.filter((lesson) => selectedCategory === 'all' || lesson.category === selectedCategory) || [], [data, selectedCategory]);
   const visibleLessons = showAllLessons ? lessons : lessons.slice(0, 6);
 
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setMenuOpen(false);
-  };
-
   const reset = () => {
     if (!window.confirm('Reset your attempts, XP, achievements, vocabulary, and activity? Your account and enrollment remain.')) return;
     void resetProgress()
@@ -59,7 +54,6 @@ export function useStudentWorkspaceViewModel(_props?: StudentWorkspaceViewProps)
     xpInLevel: data ? data.profile.xp % 250 : 0,
     notify,
     reset,
-    scrollTo,
     setData,
     setMenuOpen,
     setProfileOpen,

@@ -4,9 +4,10 @@ import { archiveLesson, createModule, getLessonAnalytics, getTeacherDashboard, p
 import type { AssignmentTarget, LessonEditorTarget, TeacherTab, TeacherWorkspaceViewModel, TeacherWorkspaceViewProps } from '../models/types';
 import { duplicateLesson, reorderLessons } from '../../platform/models/api';
 
-export function useTeacherWorkspaceViewModel({ onLogout }: TeacherWorkspaceViewProps): TeacherWorkspaceViewModel {
+export function useTeacherWorkspaceViewModel({ onLogout, page, onNavigate }: TeacherWorkspaceViewProps): TeacherWorkspaceViewModel {
   const [data, setData] = useState<TeacherDashboardData | null>(null);
-  const [tab, setTab] = useState<TeacherTab>('overview');
+  const tab: TeacherTab = page === 'dashboard' ? 'overview' : page === 'courses' ? 'content' : page;
+  const setTab = (nextTab: TeacherTab) => onNavigate(`/teacher/${nextTab === 'overview' ? 'dashboard' : nextTab === 'content' ? 'courses' : nextTab}`);
   const [menuOpen, setMenuOpen] = useState(false);
   const [courseForm, setCourseForm] = useState(false);
   const [announcementForm, setAnnouncementForm] = useState(false);

@@ -1,5 +1,5 @@
 import { apiUrl, getToken, request } from '../../../services/api';
-import type { AdminData, PlatformData } from './types';
+import type { AdminData, InvitationPreview, PlatformData } from './types';
 
 export const getPlatform = () => request<PlatformData>('/api/platform');
 export const markAllRead = () => request<PlatformData>('/api/notifications/read-all', { method: 'PUT' });
@@ -8,6 +8,13 @@ export const postDiscussion = (courseId: string, body: string) => request(`/api/
 export const submitWork = (assignmentId: string, textContent: string, attachmentUrl = '') => request<PlatformData>(`/api/assignments/${assignmentId}/submissions`, { method: 'POST', body: JSON.stringify({ textContent, attachmentUrl }) });
 export const createClassroom = (payload: { courseId: string; name: string }) => request<PlatformData>('/api/teacher/classrooms', { method: 'POST', body: JSON.stringify(payload) });
 export const addClassroomStudent = (classroomId: string, studentId: string) => request<PlatformData>(`/api/teacher/classrooms/${classroomId}/students/${studentId}`, { method: 'POST' });
+export const removeClassroomStudent = (classroomId: string, studentId: string) => request<PlatformData>(`/api/teacher/classrooms/${classroomId}/students/${studentId}`, { method: 'DELETE' });
+export const createClassroomInvitation = (classroomId: string, payload: { assignmentId?: string; approvalRequired: boolean; usageLimit?: number | null; expiresAt?: string | null }) => request<PlatformData>(`/api/teacher/classrooms/${classroomId}/invitations`, { method: 'POST', body: JSON.stringify(payload) });
+export const revokeClassroomInvitation = (invitationId: string) => request<PlatformData>(`/api/teacher/invitations/${invitationId}`, { method: 'DELETE' });
+export const resolveJoinRequest = (requestId: string, status: 'accepted' | 'rejected') => request<PlatformData>(`/api/teacher/join-requests/${requestId}`, { method: 'PUT', body: JSON.stringify({ status }) });
+export const previewInvitation = (code: string) => request<InvitationPreview>(`/api/invitations/${encodeURIComponent(code)}`);
+export const joinClassroom = (code: string) => request<PlatformData>(`/api/invitations/${encodeURIComponent(code)}/join`, { method: 'POST' });
+export const leaveClassroom = (classroomId: string) => request<PlatformData>(`/api/classrooms/${classroomId}/membership`, { method: 'DELETE' });
 export const gradeWork = (submissionId: string, score: number, feedback: string) => request<PlatformData>(`/api/teacher/submissions/${submissionId}/grade`, { method: 'PUT', body: JSON.stringify({ score, feedback }) });
 export const createEvent = (payload: { courseId: string; title: string; startsAt: string; description?: string }) => request<PlatformData>('/api/teacher/calendar', { method: 'POST', body: JSON.stringify(payload) });
 export const createBankQuestion = (payload: { prompt: string; type: string; choices: string[]; answer: string | number }) => request<PlatformData>('/api/teacher/question-bank', { method: 'POST', body: JSON.stringify(payload) });

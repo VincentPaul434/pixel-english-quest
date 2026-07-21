@@ -285,7 +285,7 @@ export function TeacherWorkspaceView(props: TeacherWorkspaceViewProps) {
         {tab === 'content' && <ContentView data={data} actions={contentActions} />}
         {tab === 'students' && <StudentsView data={data} />}
         {tab === 'assignments' && <AssignmentsView data={data} setTab={setTab} />}
-        {tab === 'operations' && <TeacherOperations courses={data.courses} students={data.students} user={data.profile} notify={notify} />}
+        {tab === 'operations' && <TeacherOperations courses={data.courses} students={data.students} assignments={data.assignments} user={data.profile} notify={notify} />}
       </main>
 
       {courseForm && <CourseForm onClose={() => setCourseForm(false)} onSaved={setData} notify={notify} />}

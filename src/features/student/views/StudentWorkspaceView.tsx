@@ -143,8 +143,8 @@ function VocabularyPanel(props: VocabularyPanelProps) {
   );
 }
 
-export function StudentWorkspaceView({ initialUser, onLogout }: StudentWorkspaceViewProps) {
-  const vm = useStudentWorkspaceViewModel({ initialUser, onLogout });
+export function StudentWorkspaceView({ initialUser, onLogout, page, onNavigate }: StudentWorkspaceViewProps) {
+  const vm = useStudentWorkspaceViewModel();
   const {
     data,
     error,
@@ -154,7 +154,6 @@ export function StudentWorkspaceView({ initialUser, onLogout }: StudentWorkspace
     profileOpen,
     quizOpen,
     reset,
-    scrollTo,
     selectedCategory,
     selectedLesson,
     setData,
@@ -173,18 +172,23 @@ export function StudentWorkspaceView({ initialUser, onLogout }: StudentWorkspace
   if (!data) return <main className="loading-screen"><PixelIcon className="loading-rune" name="sparkle" size={58} /><p>Preparing your learning path...</p></main>;
   if (!data.profile.onboardingComplete) return <Onboarding profile={initialUser} onComplete={setData} />;
 
+  const navigate = (destination: string) => {
+    setMenuOpen(false);
+    onNavigate(`/student/${destination}`);
+  };
+
   return (
     <div className="app-shell student-shell">
       <header className="topbar">
         <button className="icon-button menu-button" onClick={() => setMenuOpen(true)} aria-label="Open menu"><PixelIcon name="menu" /></button>
-        <button className="brand" onClick={() => scrollTo('dashboard')}><span className="brand-mark"><PixelIcon name="academy" size={23} /></span><span>English Pixel</span><i>Academy</i></button>
+        <button className="brand" onClick={() => navigate('dashboard')}><span className="brand-mark"><PixelIcon name="academy" size={23} /></span><span>English Pixel</span><i>Academy</i></button>
         <div className="topbar-spacer" /><div className="streak-chip"><PixelIcon name="flame" size={15} /> {data.stats.streak} day streak</div><div className="level-chip"><PixelIcon name="sparkle" size={14} /> LVL {data.profile.level}</div>
         <button className="profile-trigger" onClick={() => setProfileOpen(true)}><span className="mini-avatar"><img src={pixelWizard} alt="" /></span><span>{data.profile.name}</span><PixelIcon name="chevronDown" size={17} /></button>
       </header>
-      <aside className={`side-drawer ${menuOpen ? 'open' : ''}`}><div className="drawer-head"><span className="brand"><span className="brand-mark"><PixelIcon name="academy" /></span><span>English Pixel</span><i>Academy</i></span><button className="icon-button" onClick={() => setMenuOpen(false)}><PixelIcon name="close" /></button></div><nav><button onClick={() => scrollTo('dashboard')}><PixelIcon name="home" /> Dashboard</button><button onClick={() => scrollTo('lessons')}><PixelIcon name="book" /> Courses & lessons</button><button onClick={() => scrollTo('assignments')}><PixelIcon name="scroll" /> Assignments</button><button onClick={() => scrollTo('study')}><PixelIcon name="brain" /> Study deck</button><button onClick={() => scrollTo('achievements')}><PixelIcon name="trophy" /> Achievements</button><button onClick={() => scrollTo('activity')}><PixelIcon name="magic" /> Activity</button></nav><div className="drawer-tip"><PixelIcon name="flame" size={34} /><strong>{data.profile.dailyGoal} minute daily goal</strong><small>{data.profile.learningGoal}</small></div><button className="drawer-close" onClick={onLogout}><PixelIcon name="logout" /> Sign out</button></aside>
+      <aside className={`side-drawer ${menuOpen ? 'open' : ''}`}><div className="drawer-head"><span className="brand"><span className="brand-mark"><PixelIcon name="academy" /></span><span>English Pixel</span><i>Academy</i></span><button className="icon-button" onClick={() => setMenuOpen(false)}><PixelIcon name="close" /></button></div><nav><button className={page === 'dashboard' ? 'active' : ''} onClick={() => navigate('dashboard')}><PixelIcon name="home" /> Dashboard</button><button className={page === 'courses' ? 'active' : ''} onClick={() => navigate('courses')}><PixelIcon name="book" /> Courses & lessons</button><button className={page === 'assignments' ? 'active' : ''} onClick={() => navigate('assignments')}><PixelIcon name="scroll" /> Assignments</button><button className={page === 'learning-hub' ? 'active' : ''} onClick={() => navigate('learning-hub')}><PixelIcon name="academy" /> Learning hub</button><button className={page === 'study' ? 'active' : ''} onClick={() => navigate('study')}><PixelIcon name="brain" /> Study deck</button><button className={page === 'achievements' ? 'active' : ''} onClick={() => navigate('achievements')}><PixelIcon name="trophy" /> Achievements</button><button className={page === 'activity' ? 'active' : ''} onClick={() => navigate('activity')}><PixelIcon name="magic" /> Activity</button></nav><div className="drawer-tip"><PixelIcon name="flame" size={34} /><strong>{data.profile.dailyGoal} minute daily goal</strong><small>{data.profile.learningGoal}</small></div><button className="drawer-close" onClick={onLogout}><PixelIcon name="logout" /> Sign out</button></aside>
       {menuOpen && <button className="scrim" onClick={() => setMenuOpen(false)} aria-label="Close menu" />}
 
-      <main id="dashboard" className="dashboard">
+      <main className={`dashboard student-page student-page-${page}`} aria-label={`${page.replace('-', ' ')} page`}>
         <section className="welcome-card panel learner-hero"><div><span className="overline"><PixelIcon name="sparkle" size={15} /> Recommended next quest</span><h1>Welcome back, <em>{data.profile.name}!</em></h1><p>{data.recommendation ? `${data.recommendation.title} is ready in ${data.recommendation.courseTitle}.` : 'Every enrolled quest is complete. Practise again to strengthen mastery!'}</p><div className="hero-actions">{data.recommendation && <button className="primary-button" onClick={() => setSelectedLesson(data.recommendation!)}><PixelIcon name="play" /> {data.recommendation.progress?.status === 'in_progress' ? 'Resume lesson' : 'Start next lesson'}</button>}<button className="secondary-button" onClick={() => setQuizOpen(true)}><PixelIcon name="quiz" /> Quick quiz</button></div></div><div className="hero-character"><img className="wizard-art" src={pixelWizard} alt="Pixel wizard reading" /><div className="character-shadow" /></div></section>
 
         <section className="progress-card panel"><div className="section-title-row"><div className="section-title"><span className="title-icon sword"><PixelIcon name="sword" /></span><div><small>Curriculum mastery</small><h2>Your Progress</h2></div></div><strong className="progress-percent">{data.stats.progress}%</strong></div><div className="progress-track"><div className="progress-fill" style={{ width: `${data.stats.progress}%` }}><i /></div></div><div className="progress-caption"><span>{data.stats.completed} of {data.stats.total} lessons mastered</span><span>{data.stats.total - data.stats.completed} remaining</span></div></section>
@@ -196,11 +200,11 @@ export function StudentWorkspaceView({ initialUser, onLogout }: StudentWorkspace
 
         {data.announcements.length > 0 && <section className="announcement-card panel"><div className="section-title-row"><div className="section-title"><PixelIcon name="academy" /><div><small>Classroom noticeboard</small><h2>Announcements</h2></div></div></div><div className="announcement-list">{data.announcements.map((item) => <article key={item.id}><span className="overline">{item.courseTitle}</span><strong>{item.title}</strong><p>{item.body}</p><small>{item.teacherName} · {new Date(item.publishedAt).toLocaleDateString()}</small></article>)}</div></section>}
 
-        <StudentLearningHub
+        {page === 'learning-hub' && <StudentLearningHub
           courses={[...new Map(data.lessons.map((lesson) => [lesson.courseId, { id: lesson.courseId, title: lesson.courseTitle || 'Course' }])).values()]}
           assignments={data.assignments}
           notify={notify}
-        />
+        />}
 
         <section id="lessons" className="categories-card panel section-anchor"><div className="section-title-row"><div className="section-title"><PixelIcon className="yellow" name="star" /><div><small>Structured curriculum</small><h2>Courses & Lessons</h2></div></div><span className="section-hint">Draft answers save automatically</span></div><div className="category-tabs"><button className={selectedCategory === 'all' ? 'active' : ''} onClick={() => setSelectedCategory('all')}>All</button>{(Object.keys(categoryDetails) as Category[]).map((category) => <button className={selectedCategory === category ? 'active' : ''} onClick={() => setSelectedCategory(category)} key={category}><PixelIcon name={categoryDetails[category].icon} size={16} /> {categoryDetails[category].label}</button>)}</div><div className="curriculum-grid">{visibleLessons.map((lesson) => <button className={`curriculum-lesson ${lesson.completed ? 'completed' : lesson.progress?.status === 'in_progress' ? 'in-progress' : ''}`} onClick={() => setSelectedLesson(lesson)} key={lesson.id}><span className="lesson-icon"><PixelIcon name={categoryDetails[lesson.category].icon} /></span><div><small>{lesson.courseTitle} · {lesson.moduleTitle}</small><strong>{lesson.title}</strong><p>{lesson.difficulty} · {lesson.minutes} min · {lesson.masteryScore}% mastery</p>{lesson.progress && <div className="lesson-score">Best score: {lesson.progress.bestScore}% · {lesson.progress.attempts} attempt{lesson.progress.attempts === 1 ? '' : 's'}</div>}</div><i>{lesson.completed ? <><PixelIcon name="check" /> Mastered</> : lesson.progress?.status === 'in_progress' ? <>Resume <PixelIcon name="play" /></> : <>Start <PixelIcon name="play" /></>}</i></button>)}</div>{lessons.length > 6 && <button className="show-more" onClick={() => setShowAllLessons((value) => !value)}>{showAllLessons ? 'Show fewer lessons' : `Show all ${lessons.length} lessons`}</button>}</section>
 

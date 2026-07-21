@@ -1,9 +1,12 @@
 import type { Dispatch, FormEventHandler, SetStateAction } from 'react';
 import type { Category, Lesson, LessonResult, LessonSummary, QuickQuestion, StudentDashboardData, User, VocabularyItem } from '../../academy/models/types';
+import type { StudentPage } from '../../../routes/route-types';
 
 export type StudentWorkspaceViewProps = {
   initialUser: User;
   onLogout: () => void;
+  page: StudentPage;
+  onNavigate: (path: string) => void;
 };
 
 export type RecognitionInstance = {
@@ -63,7 +66,6 @@ export type StudentWorkspaceViewModel = {
   xpInLevel: number;
   notify: (message: string) => void;
   reset: () => void;
-  scrollTo: (id: string) => void;
   setData: Dispatch<SetStateAction<StudentDashboardData | null>>;
   setMenuOpen: Dispatch<SetStateAction<boolean>>;
   setProfileOpen: Dispatch<SetStateAction<boolean>>;

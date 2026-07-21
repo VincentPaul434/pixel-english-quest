@@ -125,6 +125,18 @@ h1, h2 { font-family: var(--pixel); }
 .stat-card small { color: #7182ac; font-size: 11px; }
 .categories-card, .achievements-card, .activity-card { padding: 29px; border-radius: 14px; margin-top: 34px; }
 .section-anchor { scroll-margin-top: 102px; }
+.student-page-dashboard > .assignment-card,
+.student-page-dashboard > .platform-hub,
+.student-page-dashboard > .categories-card,
+.student-page-dashboard > .study-card,
+.student-page-dashboard > .achievements-card,
+.student-page-dashboard > .activity-card { display: none; }
+.student-page-courses > section:not(.categories-card),
+.student-page-assignments > section:not(.assignment-card),
+.student-page-learning-hub > section:not(.platform-hub),
+.student-page-study > section:not(.study-card),
+.student-page-achievements > section:not(.achievements-card),
+.student-page-activity > section:not(.activity-card) { display: none; }
 .section-hint { color: #7890c8; font-size: 12px; }
 .category-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: 25px; }
 .category-button { position: relative; min-height: 124px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 8px; padding: 15px 17px; overflow: hidden; text-align: left; border: 1px solid #3657bd; border-radius: 10px; background: linear-gradient(145deg, rgba(12, 36, 93, .95), rgba(5, 18, 57, .92)); cursor: pointer; transition: transform .2s ease, border-color .2s ease, background .2s ease; }
@@ -177,7 +189,8 @@ footer svg { color: var(--gold); }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
 .side-drawer nav { display: grid; gap: 8px; }
 .side-drawer nav button, .drawer-close { min-height: 49px; border: 0; border-radius: 8px; background: transparent; display: flex; align-items: center; gap: 13px; padding: 0 15px; cursor: pointer; color: #afbddc; font-weight: 800; text-align: left; }
-.side-drawer nav button:hover { color: #fff; background: #0b2869; }
+.side-drawer nav button:hover, .side-drawer nav button.active { color: #fff; background: #0b2869; }
+.side-drawer nav button.active { box-shadow: inset 3px 0 0 var(--cyan); }
 .side-drawer nav svg, .drawer-close svg { width: 20px; }
 .drawer-tip { margin-top: auto; display: grid; text-align: center; padding: 22px 13px; border: 1px solid var(--line); border-radius: 10px; background: rgba(16, 43, 103, .45); }
 .drawer-tip svg { justify-self: center; color: var(--gold); }
@@ -644,6 +657,25 @@ label { color: #a8b8da; }
 .classroom-grid article { display: grid; gap: 7px; padding: 15px; border: 1px solid #2e4b86; border-radius: 9px; }
 .classroom-grid small { color: #8398bf; }
 .classroom-grid code { width: max-content; padding: 5px 8px; color: #78ddf7; border-radius: 5px; background: #071635; }
+.invite-workflow { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr); gap: 14px; margin-top: 18px; }
+.invite-workflow form, .invite-preview, .invitation-history { display: grid; align-content: start; gap: 9px; padding: 16px; border: 1px solid #29457e; border-radius: 10px; background: rgba(4, 19, 58, .72); }
+.invite-workflow form > div { display: flex; gap: 8px; }
+.invite-workflow input { min-width: 0; flex: 1; color: white; }
+.invite-preview > .status-pill { justify-self: start; }
+.invitation-history { margin-top: 14px; }
+.invitation-history > h3 { margin: 0; font: 700 16px var(--pixel); }
+.status-pill.pending { color: #fbd36a; background: rgba(251, 211, 106, .12); }
+.status-pill.rejected, .status-pill.revoked, .status-pill.expired { color: #ff8c96; background: rgba(255, 79, 95, .12); }
+.status-pill.accepted, .status-pill.available { color: #75e6ad; background: rgba(74, 207, 139, .12); }
+.roster-person { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 8px; border-top: 1px solid #29457e; }
+.roster-person span { display: grid; min-width: 0; }
+.invitation-admin { margin-top: 18px; }
+.invitation-admin > article { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #29457e; }
+.invitation-admin > article > span { display: grid; gap: 4px; min-width: 0; }
+.invitation-admin > article > div { display: flex; gap: 7px; }
+.invitation-admin button, .roster-person button { min-height: 32px; padding: 0 10px; border: 1px solid #4868ad; border-radius: 6px; color: #b7c9ef; background: #102b62; cursor: pointer; }
+.invitation-admin button:disabled { cursor: not-allowed; opacity: .55; }
+.danger-button, .danger-text { color: #ff9ba4 !important; }
 .grading-list { display: grid; gap: 8px; }
 .grading-list article { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 13px; padding: 14px; border: 1px solid #28457d; border-radius: 8px; }
 .grading-list article > div { display: grid; }
@@ -728,7 +760,7 @@ label { color: #a8b8da; }
   .editor-body, .editor-preview { padding: 20px 17px 120px; }
   .three-columns, .two-columns, .choice-editor { grid-template-columns: 1fr; }
   .span-two, .span-three { grid-column: auto; }
-  .hub-grid, .hub-forms, .admin-columns { grid-template-columns: 1fr; }
+  .hub-grid, .hub-forms, .admin-columns, .invite-workflow { grid-template-columns: 1fr; }
   .grading-list article { grid-template-columns: 1fr; }
   .admin-stats { grid-template-columns: repeat(2, 1fr); }
   .security-bar { align-items: stretch; flex-direction: column; }

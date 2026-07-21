@@ -6,3 +6,11 @@ export async function authenticate(payload: Record<string, string>, endpoint: st
   setToken(result.token);
   return result.user;
 }
+
+export function requestPasswordReset(email: string) {
+  return request<{ ok: boolean; developmentToken?: string }>('/api/auth/password-reset/request', { method: 'POST', body: JSON.stringify({ email }) });
+}
+
+export function confirmPasswordReset(token: string, password: string) {
+  return request('/api/auth/password-reset/confirm', { method: 'POST', body: JSON.stringify({ token, password }) });
+}

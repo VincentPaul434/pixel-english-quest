@@ -33,4 +33,5 @@ export type AuthViewModel = {
   toggleMode: () => void;
   selectRole: (role: Role) => void;
   startDemo: (role: Role) => void;
+  forgotPassword: () => void;
 };

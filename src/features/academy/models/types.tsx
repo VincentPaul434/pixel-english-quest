@@ -1,6 +1,6 @@
 export type Category = 'reading' | 'grammar' | 'listening' | 'speaking';
 export type Role = 'student' | 'teacher';
-export type QuestionType = 'multiple_choice' | 'true_false' | 'fill_blank';
+export type QuestionType = 'multiple_choice' | 'true_false' | 'fill_blank' | 'essay' | 'matching' | 'ordering';
 
 export interface User {
   id: string;
@@ -11,6 +11,10 @@ export interface User {
   learningGoal: string;
   dailyGoal: number;
   onboardingComplete: boolean;
+  isAdmin: boolean;
+  emailVerified: boolean;
+  locale: string;
+  mfaEnabled: boolean;
   xp: number;
   level: number;
 }
@@ -21,7 +25,7 @@ export interface LessonProgress {
   lastScore: number;
   attempts: number;
   lastQuestion: number;
-  draftAnswers: Array<number | string>;
+  draftAnswers: Array<number | string | number[]>;
   bookmarked: boolean;
   notes: string;
 }
@@ -40,6 +44,11 @@ export interface LessonSummary {
   difficulty: string;
   xpReward: number;
   masteryScore: number;
+  attemptLimit?: number;
+  shuffleQuestions?: boolean;
+  availableFrom?: string | null;
+  availableUntil?: string | null;
+  version?: number;
   position: number;
   status: 'draft' | 'published' | 'archived';
   completed: boolean;
@@ -51,7 +60,9 @@ export interface Question {
   prompt: string;
   type: QuestionType;
   choices: string[];
-  answer?: number | string;
+  answer?: number | string | number[];
+  points?: number;
+  settings?: Record<string, unknown>;
   explanation?: string;
 }
 
@@ -86,6 +97,10 @@ export interface Achievement {
 export interface Assignment {
   id: string;
   title: string;
+  instructions?: string;
+  submissionType?: 'quiz' | 'text' | 'file' | 'mixed';
+  maxScore?: number;
+  allowResubmission?: boolean;
   dueAt: string | null;
   lessonId: string;
   lessonTitle: string;
@@ -146,8 +161,8 @@ export interface LessonResult {
   review: Array<{
     prompt: string;
     type: QuestionType;
-    selected: number | string;
-    answer: number | string;
+    selected: number | string | number[];
+    answer: number | string | number[];
     correct: boolean;
     explanation: string;
   }>;
@@ -160,6 +175,10 @@ export interface TeacherCourse {
   description: string;
   difficulty: string;
   status: 'draft' | 'published' | 'archived';
+  catalogVisibility: 'private' | 'public';
+  enrollmentMode: 'invite' | 'self';
+  certificateEnabled: boolean;
+  prerequisiteCourseId?: string | null;
   moduleCount: number;
   lessonCount: number;
   studentCount: number;

@@ -5,11 +5,11 @@ export function getTeacherDashboard() {
   return request<TeacherDashboardData>('/api/teacher/dashboard');
 }
 
-export function createCourse(payload: { title: string; description: string; difficulty: string }) {
+export function createCourse(payload: { title: string; description: string; difficulty: string; catalogVisibility: 'private' | 'public'; enrollmentMode: 'invite' | 'self'; certificateEnabled: boolean }) {
   return request<TeacherDashboardData>('/api/teacher/courses', { method: 'POST', body: JSON.stringify(payload) });
 }
 
-export function createAssignment(lessonId: string, payload: { title: string; dueAt: string | null; studentIds: string[] }) {
+export function createAssignment(lessonId: string, payload: { title: string; dueAt: string | null; studentIds: string[]; instructions: string; submissionType: string; allowResubmission: boolean }) {
   return request<TeacherDashboardData>(`/api/teacher/lessons/${lessonId}/assign`, { method: 'POST', body: JSON.stringify(payload) });
 }
 

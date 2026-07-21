@@ -31,6 +31,10 @@ function defaultForm(course: TeacherCourse): LessonForm {
     objectives: '',
     xpReward: 100,
     masteryScore: 75,
+    attemptLimit: 0,
+    shuffleQuestions: false,
+    availableFrom: '',
+    availableUntil: '',
     questions: [blankQuestion()]
   };
 }
@@ -53,7 +57,11 @@ function formFromLesson(lesson: Lesson): LessonForm {
     objectives: lesson.objectives.join('\n'),
     xpReward: lesson.xpReward,
     masteryScore: lesson.masteryScore,
-    questions: lesson.questions.map((question) => ({ ...question, answer: question.answer ?? (question.type === 'fill_blank' ? '' : 0) }))
+    attemptLimit: lesson.attemptLimit || 0,
+    shuffleQuestions: Boolean(lesson.shuffleQuestions),
+    availableFrom: lesson.availableFrom ? lesson.availableFrom.slice(0, 16) : '',
+    availableUntil: lesson.availableUntil ? lesson.availableUntil.slice(0, 16) : '',
+    questions: lesson.questions.map((question) => ({ ...question, answer: question.answer ?? (['fill_blank', 'essay'].includes(question.type) ? '' : ['matching', 'ordering'].includes(question.type) ? question.choices.map((_, index) => index) : 0) }))
   };
 }
 
@@ -92,7 +100,8 @@ export function useLessonEditorViewModel(props: LessonEditorViewProps): LessonEd
 
   const changeType = (index: number, type: QuestionType) => {
     if (type === 'true_false') updateQuestion(index, { type, choices: ['True', 'False'], answer: 0 });
-    else if (type === 'fill_blank') updateQuestion(index, { type, choices: [], answer: '' });
+    else if (['fill_blank', 'essay'].includes(type)) updateQuestion(index, { type, choices: [], answer: '' });
+    else if (['matching', 'ordering'].includes(type)) updateQuestion(index, { type, choices: ['', '', ''], answer: [0, 1, 2] });
     else updateQuestion(index, { type, choices: ['', '', ''], answer: 0 });
   };
 

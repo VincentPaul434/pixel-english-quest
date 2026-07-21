@@ -614,6 +614,64 @@ label { color: #a8b8da; }
 .editor-preview .passage { margin-top: 15px; }
 .editor-loading { min-width: 300px; min-height: 220px; display: grid; place-content: center; justify-items: center; border-radius: 14px; color: #8facf0; }
 
+/* Learning hub, classroom operations, and administration */
+.platform-hub { padding: 26px; border-radius: 14px; }
+.hub-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 18px; }
+.hub-grid > article { min-width: 0; padding: 17px; border: 1px solid #29457e; border-radius: 10px; background: rgba(4, 19, 58, .72); }
+.hub-grid h3, .hub-block h3, .hub-forms h3, .discussion-stream h3, .submission-strip h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font: 700 16px var(--pixel); }
+.hub-row { display: grid; gap: 3px; padding: 10px 0; border-bottom: 1px solid #20396d; color: #c1cce2; text-decoration: none; }
+.hub-row:last-child { border-bottom: 0; }
+.hub-row.unread { padding-left: 10px; border-left: 3px solid #7edcff; }
+.hub-row small, .hub-row span, .hub-empty { color: #7f94bd; }
+.hub-empty { margin: 8px 0; font-size: 13px; }
+.hub-block, .discussion-stream, .submission-strip { margin-top: 22px; }
+.catalog-strip, .submission-strip > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.catalog-strip article, .submission-strip article { display: grid; gap: 7px; padding: 15px; border: 1px solid #304c87; border-radius: 9px; background: #071b4c; }
+.catalog-strip span { width: max-content; padding: 3px 7px; border-radius: 4px; color: #77dff7; background: #12345e; font-size: 10px; text-transform: uppercase; }
+.catalog-strip small, .submission-strip small { color: #8498bf; }
+.catalog-strip button, .classroom-grid button, .grading-list button, .admin-console button { min-height: 32px; border: 1px solid #4868ad; border-radius: 6px; color: #b7c9ef; background: #102b62; cursor: pointer; }
+.catalog-strip button:disabled { opacity: .55; cursor: default; }
+.hub-forms, .operations-forms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 22px; }
+.hub-forms form, .operations-forms form { display: grid; align-content: start; gap: 9px; padding: 17px; border: 1px solid #29457e; border-radius: 10px; background: rgba(4, 19, 58, .72); }
+.hub-forms input, .hub-forms select, .hub-forms textarea, .operations-forms input, .operations-forms select { width: 100%; color: white; }
+.discussion-stream { display: grid; gap: 8px; }
+.discussion-stream article { display: grid; grid-template-columns: auto 1fr auto; gap: 5px 10px; padding: 13px; border: 1px solid #29457e; border-radius: 8px; }
+.discussion-stream article span, .discussion-stream article small { color: #788db6; font-size: 11px; }
+.discussion-stream article p { grid-column: 1 / -1; margin: 2px 0; color: #afbdd7; }
+.operations-forms { grid-template-columns: repeat(3, 1fr); margin: 0 0 18px; }
+.operations-forms h2 { margin: 0 0 5px; font: 700 17px var(--pixel); }
+.classroom-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.classroom-grid article { display: grid; gap: 7px; padding: 15px; border: 1px solid #2e4b86; border-radius: 9px; }
+.classroom-grid small { color: #8398bf; }
+.classroom-grid code { width: max-content; padding: 5px 8px; color: #78ddf7; border-radius: 5px; background: #071635; }
+.grading-list { display: grid; gap: 8px; }
+.grading-list article { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 13px; padding: 14px; border: 1px solid #28457d; border-radius: 8px; }
+.grading-list article > div { display: grid; }
+.grading-list small { color: #8195bc; }
+.grading-list p { margin: 7px 0 0; color: #acbad5; }
+.teacher-hub-grid { grid-template-columns: repeat(3, 1fr); }
+.admin-console { margin-top: 18px; padding: 24px; }
+.admin-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 9px; margin: 17px 0; }
+.admin-stats article { display: grid; padding: 13px; border: 1px solid #304c87; border-radius: 8px; }
+.admin-stats strong { color: #84a6ff; font: 700 24px var(--pixel); }
+.admin-stats small { color: #7f93bb; text-transform: capitalize; }
+.admin-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.admin-columns h3 { font: 700 17px var(--pixel); }
+.admin-columns .hub-row { grid-template-columns: 1fr auto; }
+.admin-columns .hub-row > span { grid-column: 1; }
+.security-bar { display: flex; align-items: center; gap: 9px; margin-top: 22px; padding: 14px; border: 1px solid #31508d; border-radius: 9px; background: #071a49; }
+.security-bar > span { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 2px 8px; margin-right: auto; }
+.security-bar > span svg { grid-row: span 2; color: #7bdbf3; }
+.security-bar small { color: #8195bc; }
+.security-bar button { min-height: 34px; padding: 0 12px; border: 1px solid #4968aa; border-radius: 6px; color: #c0cdf0; background: #102a60; cursor: pointer; }
+.sequence-preview, .sequence-answer { display: grid; gap: 7px; padding: 12px; border: 1px solid #304b87; border-radius: 8px; color: #aebdda; }
+.sequence-preview span, .sequence-answer > div { display: grid; gap: 4px; }
+.sequence-answer label { display: grid; gap: 5px; color: #8599c0; font-size: 11px; text-transform: uppercase; }
+.sequence-answer input { color: white; }
+.checkbox-field { display: flex !important; grid-template-columns: auto 1fr; align-items: center; gap: 8px !important; text-transform: none !important; letter-spacing: 0 !important; }
+.checkbox-field input { width: 17px !important; min-height: 17px; }
+.password-reset-link { margin: -7px 0 6px; text-align: right; }
+
 @media (max-width: 1050px) {
   .auth-screen { grid-template-columns: 1fr 1fr; }
   .auth-copy h1 { font-size: 48px; }
@@ -624,6 +682,8 @@ label { color: #a8b8da; }
   .assignment-board { grid-template-columns: 1fr 1fr; }
   .teacher-lesson-list > article { grid-template-columns: 45px 1fr auto; }
   .teacher-lesson-list .row-actions { grid-column: 2 / -1; justify-content: flex-end; }
+  .operations-forms, .teacher-hub-grid { grid-template-columns: 1fr; }
+  .admin-stats { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 760px) {
@@ -668,6 +728,10 @@ label { color: #a8b8da; }
   .editor-body, .editor-preview { padding: 20px 17px 120px; }
   .three-columns, .two-columns, .choice-editor { grid-template-columns: 1fr; }
   .span-two, .span-three { grid-column: auto; }
+  .hub-grid, .hub-forms, .admin-columns { grid-template-columns: 1fr; }
+  .grading-list article { grid-template-columns: 1fr; }
+  .admin-stats { grid-template-columns: repeat(2, 1fr); }
+  .security-bar { align-items: stretch; flex-direction: column; }
   .editor-actions { padding: 11px; flex-wrap: wrap; }
   .editor-actions button { flex: 1; padding: 0 8px; }
 }

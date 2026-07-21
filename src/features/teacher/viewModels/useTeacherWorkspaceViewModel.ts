@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { LessonAnalytics, TeacherCourse, TeacherDashboardData } from '../../academy/models/types';
 import { archiveLesson, createModule, getLessonAnalytics, getTeacherDashboard, publishLesson, updateCourseStatus } from '../models/api';
 import type { AssignmentTarget, LessonEditorTarget, TeacherTab, TeacherWorkspaceViewModel, TeacherWorkspaceViewProps } from '../models/types';
+import { duplicateLesson, reorderLessons } from '../../platform/models/api';
 
 export function useTeacherWorkspaceViewModel({ onLogout }: TeacherWorkspaceViewProps): TeacherWorkspaceViewModel {
   const [data, setData] = useState<TeacherDashboardData | null>(null);
@@ -73,6 +74,24 @@ export function useTeacherWorkspaceViewModel({ onLogout }: TeacherWorkspaceViewP
     }
   };
 
+  const duplicateTeacherLesson = async (id: string) => {
+    try {
+      await duplicateLesson(id);
+      setData(await getTeacherDashboard());
+      notify('Lesson duplicated as a draft.');
+    } catch (err) { notify(err instanceof Error ? err.message : 'Could not duplicate the lesson.'); }
+  };
+
+  const moveTeacherLesson = async (course: TeacherCourse, lessonId: string, direction: -1 | 1) => {
+    const index = course.lessons.findIndex((lesson) => lesson.id === lessonId);
+    const destination = index + direction;
+    if (index < 0 || destination < 0 || destination >= course.lessons.length) return;
+    const lessonIds = course.lessons.map((lesson) => lesson.id);
+    [lessonIds[index], lessonIds[destination]] = [lessonIds[destination], lessonIds[index]];
+    try { await reorderLessons(course.id, lessonIds); setData(await getTeacherDashboard()); notify('Lesson order updated.'); }
+    catch (err) { notify(err instanceof Error ? err.message : 'Could not reorder lessons.'); }
+  };
+
   const contentActions = {
     addModule: (course: TeacherCourse) => void addModule(course),
     updateCourse: (course: TeacherCourse, status: TeacherCourse['status']) => void updateCourse(course, status),
@@ -82,7 +101,9 @@ export function useTeacherWorkspaceViewModel({ onLogout }: TeacherWorkspaceViewP
     openAssignment: setAssignment,
     publishLesson: (id: string) => void publishTeacherLesson(id),
     archiveLesson: (id: string) => void archiveTeacherLesson(id),
-    openAnalytics: (id: string) => void openAnalytics(id)
+    openAnalytics: (id: string) => void openAnalytics(id),
+    duplicateLesson: (id: string) => void duplicateTeacherLesson(id),
+    moveLesson: (course: TeacherCourse, id: string, direction: -1 | 1) => void moveTeacherLesson(course, id, direction)
   };
 
   return {

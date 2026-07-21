@@ -18,7 +18,7 @@ export function getLesson(lessonId: string) {
   return request<Lesson>(`/api/lessons/${lessonId}`);
 }
 
-export function saveLessonCheckpoint(lessonId: string, payload: { lastQuestion: number; draftAnswers: Array<number | string> }) {
+export function saveLessonCheckpoint(lessonId: string, payload: { lastQuestion: number; draftAnswers: Array<number | string | number[]> }) {
   return request(`/api/lessons/${lessonId}/checkpoint`, { method: 'PUT', body: JSON.stringify(payload) });
 }
 
@@ -26,7 +26,7 @@ export function saveLessonStudy(lessonId: string, payload: { notes: string; book
   return request(`/api/lessons/${lessonId}/study`, { method: 'PUT', body: JSON.stringify(payload) });
 }
 
-export function completeLesson(lessonId: string, payload: { answers: Array<number | string>; durationSeconds: number }) {
+export function completeLesson(lessonId: string, payload: { answers: Array<number | string | number[]>; durationSeconds: number }) {
   return request<LessonResult>(`/api/lessons/${lessonId}/complete`, { method: 'POST', body: JSON.stringify(payload) });
 }
 

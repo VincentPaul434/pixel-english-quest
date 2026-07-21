@@ -6,13 +6,14 @@ import type { LessonAnalytics, TeacherCourse, TeacherDashboardData } from '../..
 import type { AnnouncementFormProps, AssignmentFormProps, CourseFormProps, TeacherContentActions, TeacherModalProps, TeacherTab, TeacherWorkspaceViewProps } from '../models/types';
 import { useAnnouncementFormViewModel, useAssignmentFormViewModel, useCourseFormViewModel } from '../viewModels/useTeacherFormsViewModel';
 import { useTeacherWorkspaceViewModel } from '../viewModels/useTeacherWorkspaceViewModel';
+import { TeacherOperations } from '../../platform';
 
 function Modal({ children, onClose, label, wide = false }: TeacherModalProps) {
   return <ModalFrame onClose={onClose} label={label} wide={wide} contentClassName="teacher-modal">{children}</ModalFrame>;
 }
 
 function CourseForm(props: CourseFormProps) {
-  const { busy, description, difficulty, setDescription, setDifficulty, setTitle, submit, title } = useCourseFormViewModel(props);
+  const { busy, catalogVisibility, certificateEnabled, description, difficulty, enrollmentMode, setCatalogVisibility, setCertificateEnabled, setDescription, setDifficulty, setEnrollmentMode, setTitle, submit, title } = useCourseFormViewModel(props);
 
   return (
     <Modal onClose={props.onClose} label="create course">
@@ -23,6 +24,9 @@ function CourseForm(props: CourseFormProps) {
         <label>Course title<input value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={120} placeholder="Everyday English A1" /></label>
         <label>Description<textarea rows={4} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="What will learners achieve?" /></label>
         <label>Difficulty<select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></label>
+        <label>Catalog visibility<select value={catalogVisibility} onChange={(event) => setCatalogVisibility(event.target.value as 'private' | 'public')}><option value="private">Private</option><option value="public">Public catalog</option></select></label>
+        <label>Enrollment<select value={enrollmentMode} onChange={(event) => setEnrollmentMode(event.target.value as 'invite' | 'self')}><option value="invite">Teacher invitation</option><option value="self">Student self-enrollment</option></select></label>
+        <label className="checkbox-field"><input type="checkbox" checked={certificateEnabled} onChange={(event) => setCertificateEnabled(event.target.checked)} /> Issue certificates on completion</label>
         <button className="primary-button" disabled={busy}>{busy ? 'Creating...' : 'Create course'}</button>
       </form>
     </Modal>
@@ -30,7 +34,7 @@ function CourseForm(props: CourseFormProps) {
 }
 
 function AssignmentForm(props: AssignmentFormProps) {
-  const { busy, dueAt, lesson, selected, setDueAt, setSelected, setTitle, submit, title, toggle } = useAssignmentFormViewModel(props);
+  const { allowResubmission, busy, dueAt, instructions, lesson, selected, setAllowResubmission, setDueAt, setInstructions, setSelected, setSubmissionType, setTitle, submissionType, submit, title, toggle } = useAssignmentFormViewModel(props);
   const { students } = props;
 
   return (
@@ -40,6 +44,9 @@ function AssignmentForm(props: AssignmentFormProps) {
         <h2>Assign {lesson.title}</h2>
         <label>Assignment title<input value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
         <label>Due date<input type="datetime-local" value={dueAt} onChange={(event) => setDueAt(event.target.value)} /></label>
+        <label>Submission type<select value={submissionType} onChange={(event) => setSubmissionType(event.target.value)}><option value="quiz">Lesson quiz</option><option value="text">Written response</option><option value="file">File/link</option><option value="mixed">Text and file</option></select></label>
+        <label>Instructions<textarea rows={3} value={instructions} onChange={(event) => setInstructions(event.target.value)} placeholder="What should learners submit?" /></label>
+        <label className="checkbox-field"><input type="checkbox" checked={allowResubmission} onChange={(event) => setAllowResubmission(event.target.checked)} /> Allow resubmissions</label>
         <fieldset>
           <legend>Students</legend>
           <div className="student-checklist">
@@ -189,6 +196,9 @@ function LessonRow({ course, lesson, actions }: { course: TeacherCourse; lesson:
         {lesson.status === 'draft' && <button onClick={() => actions.publishLesson(lesson.id)} title="Publish"><PixelIcon name="sparkle" /></button>}
         {lesson.status === 'published' && <button onClick={() => actions.openAssignment({ course, lessonId: lesson.id })} title="Assign"><PixelIcon name="scroll" /></button>}
         <button onClick={() => actions.openAnalytics(lesson.id)} title="Analytics"><PixelIcon name="brain" /></button>
+        <button onClick={() => actions.duplicateLesson(lesson.id)} title="Duplicate"><PixelIcon name="magic" /></button>
+        <button onClick={() => actions.moveLesson(course, lesson.id, -1)} title="Move up">↑</button>
+        <button onClick={() => actions.moveLesson(course, lesson.id, 1)} title="Move down">↓</button>
         <button onClick={() => actions.archiveLesson(lesson.id)} className="danger" title="Archive"><PixelIcon name="close" /></button>
       </div>
     </article>
@@ -256,7 +266,7 @@ export function TeacherWorkspaceView(props: TeacherWorkspaceViewProps) {
         <button className="icon-button menu-button" onClick={() => setMenuOpen(true)} aria-label="Open teacher menu"><PixelIcon name="menu" /></button>
         <button className="brand" onClick={() => setTab('overview')}><span className="brand-mark"><PixelIcon name="academy" /></span><span>English Pixel</span><i>Teacher</i></button>
         <nav className="teacher-top-nav">
-          {(['overview', 'content', 'students', 'assignments'] as TeacherTab[]).map((item) => <button className={tab === item ? 'active' : ''} onClick={() => setTab(item)} key={item}>{item[0].toUpperCase() + item.slice(1)}</button>)}
+          {(['overview', 'content', 'students', 'assignments', 'operations'] as TeacherTab[]).map((item) => <button className={tab === item ? 'active' : ''} onClick={() => setTab(item)} key={item}>{item[0].toUpperCase() + item.slice(1)}</button>)}
         </nav>
         <div className="topbar-spacer" />
         <button className="profile-trigger"><span className="mini-avatar"><img src={pixelWizard} alt="" /></span><span>{data.profile.name}</span><small>Teacher</small></button>
@@ -265,7 +275,7 @@ export function TeacherWorkspaceView(props: TeacherWorkspaceViewProps) {
 
       <aside className={`side-drawer ${menuOpen ? 'open' : ''}`}>
         <div className="drawer-head"><span className="brand"><span className="brand-mark"><PixelIcon name="academy" /></span><span>Teacher</span><i>Workspace</i></span><button className="icon-button" onClick={() => setMenuOpen(false)} aria-label="Close teacher menu"><PixelIcon name="close" /></button></div>
-        <nav>{(['overview', 'content', 'students', 'assignments'] as TeacherTab[]).map((item) => <button key={item} onClick={() => { setTab(item); setMenuOpen(false); }}><PixelIcon name={item === 'overview' ? 'home' : item === 'content' ? 'book' : item === 'students' ? 'profile' : 'scroll'} /> {item[0].toUpperCase() + item.slice(1)}</button>)}</nav>
+        <nav>{(['overview', 'content', 'students', 'assignments', 'operations'] as TeacherTab[]).map((item) => <button key={item} onClick={() => { setTab(item); setMenuOpen(false); }}><PixelIcon name={item === 'overview' ? 'home' : item === 'content' ? 'book' : item === 'students' ? 'profile' : item === 'operations' ? 'academy' : 'scroll'} /> {item[0].toUpperCase() + item.slice(1)}</button>)}</nav>
         <button className="drawer-close" onClick={onLogout}><PixelIcon name="logout" /> Sign out</button>
       </aside>
       {menuOpen && <button className="scrim" onClick={() => setMenuOpen(false)} aria-label="Close teacher menu" />}
@@ -275,6 +285,7 @@ export function TeacherWorkspaceView(props: TeacherWorkspaceViewProps) {
         {tab === 'content' && <ContentView data={data} actions={contentActions} />}
         {tab === 'students' && <StudentsView data={data} />}
         {tab === 'assignments' && <AssignmentsView data={data} setTab={setTab} />}
+        {tab === 'operations' && <TeacherOperations courses={data.courses} students={data.students} user={data.profile} notify={notify} />}
       </main>
 
       {courseForm && <CourseForm onClose={() => setCourseForm(false)} onSaved={setData} notify={notify} />}

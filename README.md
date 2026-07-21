@@ -17,7 +17,7 @@ To connect to a separately deployed API, create `.env`:
 VITE_API_URL=https://your-api.example.com
 ```
 
-The Render Blueprint in the API repository deploys this project as a static site and supplies `VITE_API_HOST` automatically. Direct client-side routes are rewritten to `index.html`.
+`vercel.json` provides the production Vite SPA fallback. Set `VITE_API_URL` in Vercel to the deployed API URL.
 
 ## Demo access
 
@@ -28,6 +28,8 @@ Use the Student demo and Teacher demo buttons on the sign-in page. The demo cred
 - Account creation, sign-in, onboarding, proficiency, learning goal, and daily target
 - Recommended/resumable lessons and automatically saved draft answers
 - Courses, modules, assignments, announcements, and due dates
+- Public catalog enrollment, classrooms, calendar, discussions, and notifications
+- Written/file submissions, teacher feedback, verified completion certificates, email verification, and authenticator MFA
 - Reading, grammar, listening, and speaking learning paths
 - Multimedia/resource links, narration, and browser microphone practice
 - Multiple question types, mastery scoring, explanations, and attempt review
@@ -39,11 +41,14 @@ Use the Student demo and Teacher demo buttons on the sign-in page. The demo cred
 - Course and module creation
 - Full lesson editor with draft, preview, publish, and archive workflows
 - Learning objectives, hosted audio/video/resources, and speaking/listening content
-- Multiple-choice, true/false, and fill-in-the-blank question builder
-- Adjustable duration, difficulty, mastery threshold, and XP reward
-- Student assignment with due date and learner selection
+- Multiple-choice, true/false, fill-in, essay, matching, and ordering question builder with weighted points
+- Adjustable duration, difficulty, mastery threshold, XP, attempts, and availability windows
+- Public/private catalog settings, enrollment mode, and completion certificates
+- Student assignments with due dates, instructions, submission types, and resubmission rules
 - Announcements, student progress, assignment completion, and lesson analytics
 - Question-level correct-rate and attempt-level performance reports
+- Classrooms, rosters, calendar events, grading, question bank, CSV exports, and lesson duplication/reordering/version history
+- Admin user controls, system summary, and audit trail
 
 ## Commands
 

@@ -69,7 +69,7 @@ export function useOnboardingViewModel({ profile, onComplete }: OnboardingProps)
 
 export function useLessonDialogViewModel({ summary, onClose, onDashboard, notify }: LessonDialogProps): LessonDialogViewModel {
   const [lesson, setLesson] = useState<Lesson | null>(null);
-  const [answers, setAnswers] = useState<Array<number | string>>([]);
+  const [answers, setAnswers] = useState<Array<number | string | number[]>>([]);
   const [result, setResult] = useState<LessonResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [notes, setNotes] = useState('');
@@ -84,7 +84,7 @@ export function useLessonDialogViewModel({ summary, onClose, onDashboard, notify
       if (!mounted) return;
       setLesson(loaded);
       const drafts = loaded.progress?.draftAnswers || [];
-      setAnswers(loaded.questions.map((question, index) => drafts[index] ?? (question.type === 'fill_blank' ? '' : -1)));
+      setAnswers(loaded.questions.map((question, index) => drafts[index] ?? (['fill_blank', 'essay'].includes(question.type) ? '' : ['matching', 'ordering'].includes(question.type) ? [] : -1)));
       setNotes(loaded.progress?.notes || '');
       setBookmarked(Boolean(loaded.progress?.bookmarked));
       window.setTimeout(() => document.querySelector(`[data-question-index="${loaded.progress?.lastQuestion || 0}"]`)?.scrollIntoView({ block: 'center' }), 150);
@@ -103,7 +103,7 @@ export function useLessonDialogViewModel({ summary, onClose, onDashboard, notify
     window.speechSynthesis.speak(utterance);
   };
 
-  const choose = (questionIndex: number, value: number | string) => {
+  const choose = (questionIndex: number, value: number | string | number[]) => {
     setAnswers((current) => {
       const next = current.map((answer, index) => index === questionIndex ? value : answer);
       void saveLessonCheckpoint(summary.id, { lastQuestion: questionIndex, draftAnswers: next }).catch(() => undefined);
@@ -119,7 +119,10 @@ export function useLessonDialogViewModel({ summary, onClose, onDashboard, notify
 
   const submit = () => {
     if (!lesson) return;
-    const incomplete = lesson.questions.some((question, index) => question.type === 'fill_blank' ? !String(answers[index] || '').trim() : Number(answers[index]) < 0);
+    const incomplete = lesson.questions.some((question, index) => ['fill_blank', 'essay'].includes(question.type)
+      ? !String(answers[index] || '').trim()
+      : ['matching', 'ordering'].includes(question.type) ? !Array.isArray(answers[index]) || (answers[index] as number[]).length !== question.choices.length
+        : Number(answers[index]) < 0);
     if (incomplete) return notify('Answer every question before submitting.');
     setBusy(true);
     void completeLesson(lesson.id, { answers, durationSeconds: Math.round((Date.now() - startedAt.current) / 1000) })
@@ -153,7 +156,7 @@ export function useLessonDialogViewModel({ summary, onClose, onDashboard, notify
   const restart = () => {
     if (!lesson) return;
     setResult(null);
-    setAnswers(lesson.questions.map((question) => question.type === 'fill_blank' ? '' : -1));
+    setAnswers(lesson.questions.map((question) => ['fill_blank', 'essay'].includes(question.type) ? '' : ['matching', 'ordering'].includes(question.type) ? [] : -1));
     startedAt.current = Date.now();
   };
 

@@ -75,7 +75,7 @@ export type StudentWorkspaceViewModel = {
 
 export type LessonLoadState = {
   lesson: Lesson | null;
-  answers: Array<number | string>;
+  answers: Array<number | string | number[]>;
   result: LessonResult | null;
 };
 
@@ -117,7 +117,7 @@ export type OnboardingViewModel = {
 
 export type LessonDialogViewModel = {
   lesson: Lesson | null;
-  answers: Array<number | string>;
+  answers: Array<number | string | number[]>;
   result: LessonResult | null;
   busy: boolean;
   notes: string;
@@ -125,11 +125,11 @@ export type LessonDialogViewModel = {
   speechBusy: boolean;
   speechResult: SpeechAttemptResult | null;
   setResult: Dispatch<SetStateAction<LessonResult | null>>;
-  setAnswers: Dispatch<SetStateAction<Array<number | string>>>;
+  setAnswers: Dispatch<SetStateAction<Array<number | string | number[]>>>;
   setNotes: Dispatch<SetStateAction<string>>;
   setBookmarked: Dispatch<SetStateAction<boolean>>;
   speak: (text: string) => void;
-  choose: (questionIndex: number, value: number | string) => void;
+  choose: (questionIndex: number, value: number | string | number[]) => void;
   saveStudy: () => void;
   submit: () => void;
   practiseSpeaking: () => void;

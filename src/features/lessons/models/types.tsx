@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { Category, Lesson, Question, QuestionType, TeacherCourse, TeacherDashboardData } from '../../academy/models/types';
 
-export type DraftQuestion = Question & { answer: number | string };
+export type DraftQuestion = Question & { answer: number | string | number[] };
 
 export type LessonForm = {
   courseId: string;
@@ -20,6 +20,10 @@ export type LessonForm = {
   objectives: string;
   xpReward: number;
   masteryScore: number;
+  attemptLimit: number;
+  shuffleQuestions: boolean;
+  availableFrom: string;
+  availableUntil: string;
   questions: DraftQuestion[];
 };
 

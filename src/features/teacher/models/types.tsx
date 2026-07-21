@@ -1,7 +1,7 @@
 import type { Dispatch, FormEventHandler, ReactNode, SetStateAction } from 'react';
 import type { LessonAnalytics, TeacherCourse, TeacherDashboardData, User } from '../../academy/models/types';
 
-export type TeacherTab = 'overview' | 'content' | 'students' | 'assignments';
+export type TeacherTab = 'overview' | 'content' | 'students' | 'assignments' | 'operations';
 export type Notify = (message: string) => void;
 export type DashboardSaved = (data: TeacherDashboardData) => void;
 
@@ -37,6 +37,8 @@ export type TeacherContentActions = {
   publishLesson: (lessonId: string) => void;
   archiveLesson: (lessonId: string) => void;
   openAnalytics: (lessonId: string) => void;
+  duplicateLesson: (lessonId: string) => void;
+  moveLesson: (course: TeacherCourse, lessonId: string, direction: -1 | 1) => void;
 };
 
 export type TeacherWorkspaceViewModel = {
@@ -73,10 +75,16 @@ export type CourseFormViewModel = {
   title: string;
   description: string;
   difficulty: string;
+  catalogVisibility: 'private' | 'public';
+  enrollmentMode: 'invite' | 'self';
+  certificateEnabled: boolean;
   busy: boolean;
   setTitle: Dispatch<SetStateAction<string>>;
   setDescription: Dispatch<SetStateAction<string>>;
   setDifficulty: Dispatch<SetStateAction<string>>;
+  setCatalogVisibility: Dispatch<SetStateAction<'private' | 'public'>>;
+  setEnrollmentMode: Dispatch<SetStateAction<'invite' | 'self'>>;
+  setCertificateEnabled: Dispatch<SetStateAction<boolean>>;
   submit: FormEventHandler<HTMLFormElement>;
 };
 
@@ -93,10 +101,16 @@ export type AssignmentFormViewModel = {
   lesson: TeacherCourse['lessons'][number];
   title: string;
   dueAt: string;
+  instructions: string;
+  submissionType: string;
+  allowResubmission: boolean;
   selected: string[];
   busy: boolean;
   setTitle: Dispatch<SetStateAction<string>>;
   setDueAt: Dispatch<SetStateAction<string>>;
+  setInstructions: Dispatch<SetStateAction<string>>;
+  setSubmissionType: Dispatch<SetStateAction<string>>;
+  setAllowResubmission: Dispatch<SetStateAction<boolean>>;
   setSelected: Dispatch<SetStateAction<string[]>>;
   toggle: (id: string) => void;
   submit: FormEventHandler<HTMLFormElement>;

@@ -155,7 +155,7 @@ export function TeacherOperations({ courses, assignments, user, notify }: Teache
   const decideRequest = async (requestId: string, status: 'accepted' | 'rejected') => { try { await resolveJoinRequestMutation.mutateAsync({ requestId, status }); notify(`Request ${status}.`); } catch (error) { notify(error instanceof Error ? error.message : 'Could not resolve request.'); } };
   const removeStudent = async (classroomId: string, studentId: string) => { if (!window.confirm('Remove this student and revoke classroom access?')) return; try { await removeStudentMutation.mutateAsync({ classroomId, studentId }); notify('Student removed.'); } catch (error) { notify(error instanceof Error ? error.message : 'Could not remove student.'); } };
   const revoke = async (invitationId: string) => { try { await revokeInvitationMutation.mutateAsync(invitationId); notify('Invitation revoked.'); } catch (error) { notify(error instanceof Error ? error.message : 'Could not revoke invitation.'); } };
-  const copyInvite = async (code: string) => { const link = `${window.location.origin}/student?invite=${code}`; try { await navigator.clipboard.writeText(link); notify('Invitation link copied.'); } catch { window.prompt('Copy invitation link', link); } };
+  const copyInvite = async (code: string) => { const link = `${window.location.origin}/student/learning-hub?invite=${code}`; try { await navigator.clipboard.writeText(link); notify('Invitation link copied.'); } catch { window.prompt('Copy invitation link', link); } };
 
   return (
     <div className="teacher-page operations-page">

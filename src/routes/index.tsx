@@ -55,10 +55,26 @@ export function AcademyRoutes({ user, onAuthenticated, onLogout }: AcademyRoutes
   const route = useMemo(() => routeRegistry.find((item) => item.path === pathname), [pathname]);
 
   useEffect(() => {
-    if (!user && pathname !== '/auth') navigate('/auth', true);
-    if (user && (pathname === '/' || pathname === '/auth' || pathname === '/student' || pathname === '/teacher')) navigate(roleHome, true);
-    if (user?.role === 'teacher' && pathname.startsWith('/student')) navigate('/teacher/dashboard', true);
-    if (user?.role !== 'teacher' && user && pathname.startsWith('/teacher')) navigate('/student/dashboard', true);
+    if (!user && pathname !== '/auth') {
+      navigate('/auth', true);
+      return;
+    }
+    if (user?.role !== 'teacher' && new URLSearchParams(window.location.search).has('invite') && (pathname === '/student' || pathname === '/student/dashboard')) {
+      navigate('/student/learning-hub', true);
+      return;
+    }
+    if (user && (pathname === '/' || pathname === '/auth' || pathname === '/student' || pathname === '/teacher')) {
+      navigate(roleHome, true);
+      return;
+    }
+    if (user?.role === 'teacher' && pathname.startsWith('/student')) {
+      navigate('/teacher/dashboard', true);
+      return;
+    }
+    if (user?.role !== 'teacher' && user && pathname.startsWith('/teacher')) {
+      navigate('/student/dashboard', true);
+      return;
+    }
     if (user && !route && !['/', '/student', '/teacher'].includes(pathname)) navigate(roleHome, true);
   }, [navigate, pathname, roleHome, route, user]);
 

@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { Category, LessonSummary, StudentDashboardData } from '../../academy/models/types';
-import { getStudentDashboard, resetProgress } from '../models/api';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Category, LessonSummary } from '../../academy/models/types';
+import { useResetProgressMutation } from '../../../hooks/mutations/studentMutations';
+import { useStudentDashboardQuery } from '../../../hooks/queries/studentQueries';
 import type { StudentWorkspaceViewModel, StudentWorkspaceViewProps } from '../models/types';
 
 export function useStudentWorkspaceViewModel(_props?: StudentWorkspaceViewProps): StudentWorkspaceViewModel {
-  const [data, setData] = useState<StudentDashboardData | null>(null);
-  const [error, setError] = useState('');
+  const dashboardQuery = useStudentDashboardQuery();
+  const resetMutation = useResetProgressMutation();
+  const data = dashboardQuery.data ?? null;
+  const error = dashboardQuery.error instanceof Error ? dashboardQuery.error.message : '';
   const [selectedLesson, setSelectedLesson] = useState<LessonSummary | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>('all');
   const [quizOpen, setQuizOpen] = useState(false);
@@ -14,11 +17,7 @@ export function useStudentWorkspaceViewModel(_props?: StudentWorkspaceViewProps)
   const [toast, setToast] = useState('');
   const [showAllLessons, setShowAllLessons] = useState(false);
 
-  const notify = (message: string) => setToast(message);
-
-  useEffect(() => {
-    getStudentDashboard().then(setData).catch((err) => setError(err instanceof Error ? err.message : 'Could not load the dashboard.'));
-  }, []);
+  const notify = useCallback((message: string) => setToast(message), []);
 
   useEffect(() => {
     if (!toast) return;
@@ -31,11 +30,8 @@ export function useStudentWorkspaceViewModel(_props?: StudentWorkspaceViewProps)
 
   const reset = () => {
     if (!window.confirm('Reset your attempts, XP, achievements, vocabulary, and activity? Your account and enrollment remain.')) return;
-    void resetProgress()
-      .then((dashboard) => {
-        setData(dashboard);
-        notify('A fresh adventure begins.');
-      })
+    void resetMutation.mutateAsync()
+      .then(() => notify('A fresh adventure begins.'))
       .catch((err) => notify(err instanceof Error ? err.message : 'Could not reset progress.'));
   };
 
@@ -54,7 +50,6 @@ export function useStudentWorkspaceViewModel(_props?: StudentWorkspaceViewProps)
     xpInLevel: data ? data.profile.xp % 250 : 0,
     notify,
     reset,
-    setData,
     setMenuOpen,
     setProfileOpen,
     setQuizOpen,

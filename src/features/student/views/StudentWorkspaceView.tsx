@@ -156,7 +156,6 @@ export function StudentWorkspaceView({ initialUser, onLogout, page, onNavigate }
     reset,
     selectedCategory,
     selectedLesson,
-    setData,
     setMenuOpen,
     setProfileOpen,
     setQuizOpen,
@@ -170,7 +169,7 @@ export function StudentWorkspaceView({ initialUser, onLogout, page, onNavigate }
 
   if (error) return <main className="loading-screen"><h1>The gates are sealed</h1><p>{error}</p><button className="primary-button" onClick={() => window.location.reload()}>Try again</button></main>;
   if (!data) return <main className="loading-screen"><PixelIcon className="loading-rune" name="sparkle" size={58} /><p>Preparing your learning path...</p></main>;
-  if (!data.profile.onboardingComplete) return <Onboarding profile={initialUser} onComplete={setData} />;
+  if (!data.profile.onboardingComplete) return <Onboarding profile={initialUser} />;
 
   const navigate = (destination: string) => {
     setMenuOpen(false);
@@ -208,7 +207,7 @@ export function StudentWorkspaceView({ initialUser, onLogout, page, onNavigate }
 
         <section id="lessons" className="categories-card panel section-anchor"><div className="section-title-row"><div className="section-title"><PixelIcon className="yellow" name="star" /><div><small>Structured curriculum</small><h2>Courses & Lessons</h2></div></div><span className="section-hint">Draft answers save automatically</span></div><div className="category-tabs"><button className={selectedCategory === 'all' ? 'active' : ''} onClick={() => setSelectedCategory('all')}>All</button>{(Object.keys(categoryDetails) as Category[]).map((category) => <button className={selectedCategory === category ? 'active' : ''} onClick={() => setSelectedCategory(category)} key={category}><PixelIcon name={categoryDetails[category].icon} size={16} /> {categoryDetails[category].label}</button>)}</div><div className="curriculum-grid">{visibleLessons.map((lesson) => <button className={`curriculum-lesson ${lesson.completed ? 'completed' : lesson.progress?.status === 'in_progress' ? 'in-progress' : ''}`} onClick={() => setSelectedLesson(lesson)} key={lesson.id}><span className="lesson-icon"><PixelIcon name={categoryDetails[lesson.category].icon} /></span><div><small>{lesson.courseTitle} · {lesson.moduleTitle}</small><strong>{lesson.title}</strong><p>{lesson.difficulty} · {lesson.minutes} min · {lesson.masteryScore}% mastery</p>{lesson.progress && <div className="lesson-score">Best score: {lesson.progress.bestScore}% · {lesson.progress.attempts} attempt{lesson.progress.attempts === 1 ? '' : 's'}</div>}</div><i>{lesson.completed ? <><PixelIcon name="check" /> Mastered</> : lesson.progress?.status === 'in_progress' ? <>Resume <PixelIcon name="play" /></> : <>Start <PixelIcon name="play" /></>}</i></button>)}</div>{lessons.length > 6 && <button className="show-more" onClick={() => setShowAllLessons((value) => !value)}>{showAllLessons ? 'Show fewer lessons' : `Show all ${lessons.length} lessons`}</button>}</section>
 
-        <VocabularyPanel items={data.vocabulary} onChanged={(vocabulary) => setData({ ...data, vocabulary })} notify={notify} />
+        <VocabularyPanel items={data.vocabulary} notify={notify} />
 
         <section id="achievements" className="achievements-card panel section-anchor"><div className="section-title-row"><div className="section-title"><PixelIcon className="yellow" name="award" /><div><small>Treasure shelf</small><h2>Achievements</h2></div></div><span className="section-hint">{data.stats.achievements}/{data.achievements.length} unlocked</span></div><div className="achievement-grid">{data.achievements.map((achievement) => <article className={achievement.unlocked ? 'achievement unlocked' : 'achievement locked'} key={achievement.id}><span><PixelIcon name={achievement.unlocked ? (achievement.icon as PixelIconName) : 'lock'} /></span><div><strong>{achievement.title}</strong><small>{achievement.description}</small></div>{achievement.unlocked && <PixelIcon name="check" size={16} />}</article>)}</div></section>
 
@@ -216,9 +215,9 @@ export function StudentWorkspaceView({ initialUser, onLogout, page, onNavigate }
         <footer><PixelIcon name="sparkle" size={14} /> English Pixel Academy · Learn a little. Adventure a lot. <PixelIcon name="sparkle" size={14} /></footer>
       </main>
 
-      {selectedLesson && <LessonDialog summary={selectedLesson} onClose={() => setSelectedLesson(null)} onDashboard={setData} notify={notify} />}
-      {quizOpen && <QuickQuizDialog onClose={() => setQuizOpen(false)} onDashboard={setData} notify={notify} />}
-      {profileOpen && <ProfileEditor profile={data.profile} onClose={() => setProfileOpen(false)} onSaved={setData} />}
+      {selectedLesson && <LessonDialog summary={selectedLesson} onClose={() => setSelectedLesson(null)} notify={notify} />}
+      {quizOpen && <QuickQuizDialog onClose={() => setQuizOpen(false)} notify={notify} />}
+      {profileOpen && <ProfileEditor profile={data.profile} onClose={() => setProfileOpen(false)} />}
       {profileOpen && <div className="profile-floating-actions"><button onClick={reset}><PixelIcon name="reset" /> Reset my learning data</button><button onClick={onLogout}><PixelIcon name="logout" /> Sign out</button></div>}
       {toast && <div className="toast" role="status"><PixelIcon name="sparkle" /> {toast}</div>}
     </div>

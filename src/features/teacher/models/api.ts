@@ -1,8 +1,8 @@
 import { request } from '../../../services/api';
 import type { LessonAnalytics, TeacherCourse, TeacherDashboardData } from '../../academy/models/types';
 
-export function getTeacherDashboard() {
-  return request<TeacherDashboardData>('/api/teacher/dashboard');
+export function getTeacherDashboard(signal?: AbortSignal) {
+  return request<TeacherDashboardData>('/api/teacher/dashboard', { signal });
 }
 
 export function createCourse(payload: { title: string; description: string; difficulty: string; catalogVisibility: 'private' | 'public'; enrollmentMode: 'invite' | 'self'; certificateEnabled: boolean }) {
@@ -33,6 +33,6 @@ export function archiveLesson(lessonId: string) {
   return request<TeacherDashboardData>(`/api/teacher/lessons/${lessonId}`, { method: 'DELETE' });
 }
 
-export function getLessonAnalytics(lessonId: string) {
-  return request<LessonAnalytics>(`/api/teacher/lessons/${lessonId}/analytics`);
+export function getLessonAnalytics(lessonId: string, signal?: AbortSignal) {
+  return request<LessonAnalytics>(`/api/teacher/lessons/${lessonId}/analytics`, { signal });
 }

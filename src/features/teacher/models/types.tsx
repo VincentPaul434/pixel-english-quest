@@ -4,7 +4,6 @@ import type { TeacherPage } from '../../../routes/route-types';
 
 export type TeacherTab = 'overview' | 'content' | 'students' | 'assignments' | 'operations';
 export type Notify = (message: string) => void;
-export type DashboardSaved = (data: TeacherDashboardData) => void;
 
 export type TeacherWorkspaceViewProps = {
   initialUser: User;
@@ -62,15 +61,13 @@ export type TeacherWorkspaceViewModel = {
   setAnnouncementForm: Dispatch<SetStateAction<boolean>>;
   setEditor: Dispatch<SetStateAction<LessonEditorTarget | null>>;
   setAssignment: Dispatch<SetStateAction<AssignmentTarget | null>>;
-  setAnalytics: Dispatch<SetStateAction<LessonAnalytics | null>>;
-  setData: Dispatch<SetStateAction<TeacherDashboardData | null>>;
+  setAnalytics: (analytics: LessonAnalytics | null) => void;
   notify: Notify;
   onLogout: () => void;
 };
 
 export type CourseFormProps = {
   onClose: () => void;
-  onSaved: DashboardSaved;
   notify: Notify;
 };
 
@@ -96,7 +93,6 @@ export type AssignmentFormProps = {
   lessonId: string;
   students: TeacherDashboardData['students'];
   onClose: () => void;
-  onSaved: DashboardSaved;
   notify: Notify;
 };
 
@@ -122,7 +118,6 @@ export type AssignmentFormViewModel = {
 export type AnnouncementFormProps = {
   courses: TeacherCourse[];
   onClose: () => void;
-  onSaved: DashboardSaved;
   notify: Notify;
 };
 

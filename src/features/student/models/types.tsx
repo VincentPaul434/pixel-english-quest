@@ -35,19 +35,16 @@ export type QuickQuizSubmitResult = {
 export type LessonDialogProps = {
   summary: LessonSummary;
   onClose: () => void;
-  onDashboard: (data: StudentDashboardData) => void;
   notify: (message: string) => void;
 };
 
 export type QuickQuizDialogProps = {
   onClose: () => void;
-  onDashboard: (data: StudentDashboardData) => void;
   notify: (message: string) => void;
 };
 
 export type VocabularyPanelProps = {
   items: VocabularyItem[];
-  onChanged: (items: VocabularyItem[]) => void;
   notify: (message: string) => void;
 };
 
@@ -66,7 +63,6 @@ export type StudentWorkspaceViewModel = {
   xpInLevel: number;
   notify: (message: string) => void;
   reset: () => void;
-  setData: Dispatch<SetStateAction<StudentDashboardData | null>>;
   setMenuOpen: Dispatch<SetStateAction<boolean>>;
   setProfileOpen: Dispatch<SetStateAction<boolean>>;
   setQuizOpen: Dispatch<SetStateAction<boolean>>;
@@ -84,7 +80,6 @@ export type LessonLoadState = {
 export type ProfileEditorProps = {
   profile: User;
   onClose: () => void;
-  onSaved: (data: StudentDashboardData) => void;
 };
 
 export type ProfileEditorViewModel = {
@@ -103,7 +98,6 @@ export type ProfileEditorViewModel = {
 
 export type OnboardingProps = {
   profile: User;
-  onComplete: (data: StudentDashboardData) => void;
 };
 
 export type OnboardingViewModel = {
@@ -126,7 +120,6 @@ export type LessonDialogViewModel = {
   bookmarked: boolean;
   speechBusy: boolean;
   speechResult: SpeechAttemptResult | null;
-  setResult: Dispatch<SetStateAction<LessonResult | null>>;
   setAnswers: Dispatch<SetStateAction<Array<number | string | number[]>>>;
   setNotes: Dispatch<SetStateAction<string>>;
   setBookmarked: Dispatch<SetStateAction<boolean>>;

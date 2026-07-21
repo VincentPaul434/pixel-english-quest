@@ -1,9 +1,9 @@
-import { request } from '../../../services/api';
+import { request, type ApiSuccess } from '../../../services/api';
 import type { Lesson, LessonResult, QuickQuestion, StudentDashboardData, VocabularyItem } from '../../academy/models/types';
 import type { QuickQuizSubmitResult, SpeechAttemptResult } from './types';
 
-export function getStudentDashboard() {
-  return request<StudentDashboardData>('/api/dashboard');
+export function getStudentDashboard(signal?: AbortSignal) {
+  return request<StudentDashboardData>('/api/dashboard', { signal });
 }
 
 export function updateProfile(payload: { name: string; proficiency: string; learningGoal: string; dailyGoal: number }) {
@@ -14,16 +14,16 @@ export function resetProgress() {
   return request<StudentDashboardData>('/api/reset', { method: 'POST' });
 }
 
-export function getLesson(lessonId: string) {
-  return request<Lesson>(`/api/lessons/${lessonId}`);
+export function getLesson(lessonId: string, signal?: AbortSignal) {
+  return request<Lesson>(`/api/lessons/${lessonId}`, { signal });
 }
 
 export function saveLessonCheckpoint(lessonId: string, payload: { lastQuestion: number; draftAnswers: Array<number | string | number[]> }) {
-  return request(`/api/lessons/${lessonId}/checkpoint`, { method: 'PUT', body: JSON.stringify(payload) });
+  return request<{ saved: true; updatedAt: string }>(`/api/lessons/${lessonId}/checkpoint`, { method: 'PUT', body: JSON.stringify(payload) });
 }
 
 export function saveLessonStudy(lessonId: string, payload: { notes: string; bookmarked: boolean }) {
-  return request(`/api/lessons/${lessonId}/study`, { method: 'PUT', body: JSON.stringify(payload) });
+  return request<{ saved: true; notes: string; bookmarked: boolean }>(`/api/lessons/${lessonId}/study`, { method: 'PUT', body: JSON.stringify(payload) });
 }
 
 export function completeLesson(lessonId: string, payload: { answers: Array<number | string | number[]>; durationSeconds: number }) {
@@ -34,8 +34,8 @@ export function submitSpeakingAttempt(lessonId: string, transcript: string) {
   return request<SpeechAttemptResult>(`/api/lessons/${lessonId}/speaking-attempt`, { method: 'POST', body: JSON.stringify({ transcript }) });
 }
 
-export function getQuickQuiz() {
-  return request<QuickQuestion>('/api/quick-quiz');
+export function getQuickQuiz(signal?: AbortSignal) {
+  return request<QuickQuestion>('/api/quick-quiz', { signal });
 }
 
 export function submitQuickQuiz(questionId: string, answer: number) {
@@ -47,5 +47,5 @@ export function addVocabulary(payload: { term: string; definition: string }) {
 }
 
 export function deleteVocabulary(id: string) {
-  return request(`/api/vocabulary/${id}`, { method: 'DELETE' });
+  return request<ApiSuccess>(`/api/vocabulary/${id}`, { method: 'DELETE' });
 }

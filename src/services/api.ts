@@ -3,6 +3,15 @@ const configuredApiUrl = import.meta.env.VITE_API_URL
 const API_BASE = configuredApiUrl.replace(/\/$/, '');
 const TOKEN_KEY = 'pixel-academy-session';
 
+export type ApiSuccess = { ok: true };
+
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 export function getToken() {
   return window.localStorage.getItem(TOKEN_KEY) || '';
 }
@@ -31,7 +40,7 @@ export async function request<T>(url: string, options?: RequestInit): Promise<T>
   if (!response.ok) {
     const message = typeof data === 'object' && data && 'error' in data ? String(data.error) : 'Something went wrong.';
     if (response.status === 401) window.dispatchEvent(new CustomEvent('academy:unauthorized'));
-    throw new Error(message);
+    throw new ApiError(message, response.status);
   }
   return data as T;
 }

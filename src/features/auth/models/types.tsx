@@ -28,6 +28,7 @@ export type AuthViewModel = {
   nameField: AuthFormField;
   emailField: AuthFormField;
   passwordField: AuthFormField;
+  mfaCodeField: AuthFormField;
   teacherInviteCodeField: AuthFormField;
   submit: FormEventHandler<HTMLFormElement>;
   toggleMode: () => void;

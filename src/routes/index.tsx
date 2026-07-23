@@ -1,10 +1,13 @@
-import { Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { PixelIcon } from '../shared-components/PixelIcon';
 import type { User } from '../features/academy/models/types';
 import { AuthRoute, authRoute } from './auth/AuthRoute';
 import { StudentRoutes, studentRoutes } from './student/StudentRoutes';
 import { TeacherRoutes, teacherRoutes } from './teacher/TeacherRoutes';
 import type { AppRoute, Navigate } from './route-types';
+
+const CertificateView = lazy(() => import('../features/platform/views/CertificateVerificationView').then((module) => ({ default: module.CertificateVerificationView })));
+const EmailVerificationView = lazy(() => import('../features/auth/views/EmailVerificationView').then((module) => ({ default: module.EmailVerificationView })));
 
 export type { AppRoute, AppRouteId, Navigate, StudentPage, TeacherPage } from './route-types';
 
@@ -52,10 +55,12 @@ function useBrowserRoute() {
 export function AcademyRoutes({ user, onAuthenticated, onLogout }: AcademyRoutesProps) {
   const { pathname, navigate } = useBrowserRoute();
   const roleHome = user?.role === 'teacher' ? '/teacher/dashboard' : '/student/dashboard';
+  const certificateMatch = pathname.match(/^\/certificates\/([^/]+)$/);
+  const isEmailVerification = pathname === '/verify-email';
   const route = useMemo(() => routeRegistry.find((item) => item.path === pathname), [pathname]);
 
   useEffect(() => {
-    if (!user && pathname !== '/auth') {
+    if (!user && pathname !== '/auth' && !certificateMatch && !isEmailVerification) {
       navigate('/auth', true);
       return;
     }
@@ -75,9 +80,13 @@ export function AcademyRoutes({ user, onAuthenticated, onLogout }: AcademyRoutes
       navigate('/student/dashboard', true);
       return;
     }
-    if (user && !route && !['/', '/student', '/teacher'].includes(pathname)) navigate(roleHome, true);
-  }, [navigate, pathname, roleHome, route, user]);
+    if (user && !route && !certificateMatch && !isEmailVerification && !['/', '/student', '/teacher'].includes(pathname)) navigate(roleHome, true);
+  }, [certificateMatch, isEmailVerification, navigate, pathname, roleHome, route, user]);
 
+  if (certificateMatch) {
+    return withSuspense(<CertificateView code={decodeURIComponent(certificateMatch[1])} homePath={user ? roleHome : '/auth'} />);
+  }
+  if (isEmailVerification) return withSuspense(<EmailVerificationView token={new URLSearchParams(window.location.search).get('token') || ''} homePath={user ? roleHome : '/auth'} />);
   if (!user) return withSuspense(<AuthRoute onAuthenticated={onAuthenticated} />);
   if (user.role === 'teacher') return withSuspense(<TeacherRoutes user={user} pathname={pathname} onLogout={onLogout} onNavigate={navigate} />);
   return withSuspense(<StudentRoutes user={user} pathname={pathname} onLogout={onLogout} onNavigate={navigate} />);

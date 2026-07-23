@@ -42,6 +42,7 @@ export function AuthView(props: AuthViewProps) {
           )}
           <label>Email address<input type="email" {...vm.emailField} required autoComplete="email" /></label>
           <label>Password<input type="password" {...vm.passwordField} required minLength={8} autoComplete={vm.mode === 'login' ? 'current-password' : 'new-password'} /></label>
+          {vm.mode === 'login' && <label>Authenticator or recovery code <small>Only required when MFA is enabled.</small><input {...vm.mfaCodeField} autoComplete="one-time-code" maxLength={14} placeholder="123456 or XXXX-XXXX-XXXX" /></label>}
           {vm.mode === 'login' && <button type="button" className="auth-mode-link password-reset-link" onClick={vm.forgotPassword}>Forgot your password?</button>}
           {vm.mode === 'register' && vm.role === 'teacher' && <label>Teacher invite code <small>Required only when the academy administrator configured one.</small><input type="password" {...vm.teacherInviteCodeField} autoComplete="off" /></label>}
           {vm.error && <div className="form-error" role="alert"><PixelIcon name="close" size={16} /> {vm.error}</div>}

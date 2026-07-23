@@ -1,10 +1,13 @@
+import { useRef } from 'react';
 import { PixelIcon } from '../../../shared-components/PixelIcon';
+import { useDialogFocus } from '../../../shared-components/ModalFrame';
 import type { Category, QuestionType } from '../../academy/models/types';
 import type { LessonEditorViewProps } from '../models/types';
 import { useLessonEditorViewModel } from '../viewModels/useLessonEditorViewModel';
 
 export function LessonEditorView(props: LessonEditorViewProps) {
   const vm = useLessonEditorViewModel(props);
+  const editorRef = useRef<HTMLElement>(null);
   const {
     blankQuestion,
     busy,
@@ -20,13 +23,14 @@ export function LessonEditorView(props: LessonEditorViewProps) {
     setForm,
     updateQuestion
   } = vm;
+  useDialogFocus(editorRef, onClose);
 
   if (vm.loading) return <div className="modal-layer"><div className="editor-loading panel"><PixelIcon name="sparkle" size={50} /><p>Loading lesson workshop...</p></div></div>;
 
   return (
     <div className="modal-layer editor-layer" role="dialog" aria-modal="true" aria-label="Lesson editor">
       <button className="modal-scrim" onClick={onClose} aria-label="Dismiss lesson editor" />
-      <section className="lesson-editor panel">
+      <section ref={editorRef} tabIndex={-1} className="lesson-editor panel">
         <header className="editor-header"><div><span className="overline"><PixelIcon name="magic" size={15} /> Teacher lesson workshop</span><h2>{vm.lessonId ? 'Edit lesson' : 'Create a new lesson'}</h2><p>Build content, media, assessment, and mastery rules in one place.</p></div><div><button className="secondary-button" onClick={vm.togglePreview}><PixelIcon name={vm.preview ? 'pencil' : 'play'} /> {vm.preview ? 'Edit' : 'Preview'}</button><button className="icon-button" onClick={vm.onClose} aria-label="Close lesson editor"><PixelIcon name="close" /></button></div></header>
 
         {vm.preview ? (

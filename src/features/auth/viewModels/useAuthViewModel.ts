@@ -9,6 +9,7 @@ export function useAuthViewModel({ onAuthenticated }: AuthViewProps): AuthViewMo
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
   const [teacherInviteCode, setTeacherInviteCode] = useState('');
   const [error, setError] = useState('');
   const authenticateMutation = useAuthenticateMutation();
@@ -27,7 +28,7 @@ export function useAuthViewModel({ onAuthenticated }: AuthViewProps): AuthViewMo
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    void authenticateUser(mode === 'login' ? { email, password } : { name, email, password, role, teacherInviteCode }, `/api/auth/${mode}`);
+    void authenticateUser(mode === 'login' ? { email, password, mfaCode } : { name, email, password, role, teacherInviteCode }, `/api/auth/${mode}`);
   };
 
   const startDemo = (demoRole: Role) => {
@@ -72,6 +73,7 @@ export function useAuthViewModel({ onAuthenticated }: AuthViewProps): AuthViewMo
     nameField: { value: name, onChange: (event) => setName(event.target.value) },
     emailField: { value: email, onChange: (event) => setEmail(event.target.value) },
     passwordField: { value: password, onChange: (event) => setPassword(event.target.value) },
+    mfaCodeField: { value: mfaCode, onChange: (event) => setMfaCode(event.target.value.toUpperCase()) },
     teacherInviteCodeField: { value: teacherInviteCode, onChange: (event) => setTeacherInviteCode(event.target.value) },
     submit,
     toggleMode,

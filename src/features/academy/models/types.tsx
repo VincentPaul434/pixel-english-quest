@@ -15,6 +15,7 @@ export interface User {
   emailVerified: boolean;
   locale: string;
   mfaEnabled: boolean;
+  accountStatus: 'active' | 'suspended' | 'deactivated';
   xp: number;
   level: number;
 }

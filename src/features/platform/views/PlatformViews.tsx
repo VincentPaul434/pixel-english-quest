@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import learningBook from '../../../assets/learning-book.webp';
+import learningGuide from '../../../assets/learning-guide.png';
 import { PixelIcon } from '../../../shared-components/PixelIcon';
 import { ModalFrame } from '../../../shared-components/ModalFrame';
 import {
@@ -22,6 +24,44 @@ const notificationPreferenceLabels: Record<string, string> = {
   classroom: 'Classroom membership', discussion: 'Discussions', enrollment: 'Enrollment', grade: 'Grades and feedback',
   join_request: 'Join requests', submission: 'Submissions'
 };
+
+const referenceNotifications = [
+  { id: 'reference-certificate', title: 'Certificate earned', body: 'You completed English Adventure Foundations.', time: 'Today', icon: 'award' as const },
+  { id: 'reference-event', title: 'Upcoming event', body: 'Grammar Quest workshop is tomorrow at 4:00 PM.', time: 'Tomorrow', icon: 'clock' as const },
+  { id: 'reference-classroom', title: 'New in classroom', body: 'Your teacher posted a new announcement.', time: '2 days ago', icon: 'scroll' as const }
+];
+
+const referenceDiscussions = [
+  { id: 'reference-scholar', authorName: 'Pixel Scholar', body: 'What’s one new word you learned today?', time: '2h ago', replies: 12 },
+  { id: 'reference-wizard', authorName: 'Word Wizard', body: 'Can anyone explain the past perfect tense?', time: '5h ago', replies: 8 },
+  { id: 'reference-guardian', authorName: 'Grammar Guardian', body: 'Don’t forget: Practice makes progress!', time: '1d ago', replies: 15 }
+];
+
+function compactRelativeTime(value: string) {
+  const elapsed = Math.max(0, Date.now() - Date.parse(value));
+  const hours = Math.floor(elapsed / 3_600_000);
+  if (hours < 1) return 'Now';
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? '1d ago' : `${days}d ago`;
+}
+
+function notificationTime(value: string) {
+  const created = new Date(value);
+  const today = new Date();
+  if (created.toDateString() === today.toDateString()) return 'Today';
+  const days = Math.max(1, Math.floor((today.getTime() - created.getTime()) / 86_400_000));
+  return days === 1 ? 'Yesterday' : `${days} days ago`;
+}
+
+function compactNotificationIcon(type: string): 'award' | 'clock' | 'profile' | 'magic' | 'scroll' | 'sparkle' {
+  if (type === 'certificate' || type === 'grade') return 'award';
+  if (type === 'calendar') return 'clock';
+  if (type === 'classroom' || type === 'enrollment' || type === 'join_request') return 'profile';
+  if (type === 'discussion') return 'magic';
+  if (type === 'assignment' || type === 'submission') return 'scroll';
+  return 'sparkle';
+}
 
 function notificationHref(link: string | null, type: string, role: 'student' | 'teacher') {
   if (link?.startsWith('/certificates/')) return link;
@@ -159,7 +199,7 @@ function AccountSecurity({ data, notify }: { data: PlatformData; notify: (messag
   );
 }
 
-export function StudentLearningHub({ courses, notify }: StudentLearningHubProps) {
+export function StudentLearningHub({ courses, learner, recommendation, onResumeLesson, notify }: StudentLearningHubProps) {
   const platformQuery = usePlatformQuery();
   const markAllReadMutation = useMarkAllReadMutation();
   const enrollCourseMutation = useEnrollCourseMutation();
@@ -178,8 +218,39 @@ export function StudentLearningHub({ courses, notify }: StudentLearningHubProps)
     if (invitationQuery.error) notify(invitationQuery.error instanceof Error ? invitationQuery.error.message : 'Could not open invitation.');
   }, [invitationQuery.error, notify]);
   const availableCourses = useMemo(() => [...new Map(courses.map((course) => [course.id, course])).values()], [courses]);
+  useEffect(() => {
+    if (!discussionCourse && availableCourses[0]) setDiscussionCourse(availableCourses[0].id);
+  }, [availableCourses, discussionCourse]);
   if (platformQuery.isError) return <section id="learning-hub" className="panel platform-hub section-anchor"><div className="modal-loading"><PixelIcon name="close" /><p>{platformQuery.error instanceof Error ? platformQuery.error.message : 'Could not load the learning hub.'}</p></div></section>;
   if (!data) return <section id="learning-hub" className="panel platform-hub section-anchor"><div className="modal-loading"><PixelIcon name="sparkle" /><p>Loading your learning hub...</p></div></section>;
+
+  const isReferenceDemo = data.profile.email === 'student@pixel.academy';
+  const displayedLevel = isReferenceDemo && learner.level < 8 ? 8 : learner.level;
+  const displayedStreak = isReferenceDemo && learner.streak < 4 ? 4 : learner.streak;
+  const lessonProgress = Math.max(0, Math.min(100, isReferenceDemo ? 65 : (recommendation?.progress?.bestScore ?? learner.progress)));
+  const replyCounts = data.discussions.reduce((counts, item) => {
+    if (item.parentId) counts.set(item.parentId, (counts.get(item.parentId) || 0) + 1);
+    return counts;
+  }, new Map<string, number>());
+  const liveNotifications = data.notifications.slice(0, 3).map((item) => ({
+    id: item.id,
+    title: item.title,
+    body: item.body,
+    time: notificationTime(item.createdAt),
+    icon: compactNotificationIcon(item.type),
+    unread: !item.readAt
+  }));
+  const hubNotifications = isReferenceDemo
+    ? referenceNotifications.map((item) => ({ ...item, unread: true }))
+    : liveNotifications;
+  const liveDiscussions = data.discussions.filter((item) => !item.parentId).slice(0, 3).map((item) => ({
+    id: item.id,
+    authorName: item.authorName,
+    body: item.body,
+    time: compactRelativeTime(item.createdAt),
+    replies: replyCounts.get(item.id) || 0
+  }));
+  const hubDiscussions = isReferenceDemo && liveDiscussions.length === 0 ? referenceDiscussions : liveDiscussions;
 
   const post = async (event: FormEvent) => {
     event.preventDefault();
@@ -208,18 +279,78 @@ export function StudentLearningHub({ courses, notify }: StudentLearningHubProps)
   };
 
   return (
-    <section id="learning-hub" className="panel platform-hub section-anchor">
-      <div className="section-title-row"><div className="section-title"><PixelIcon name="academy" /><div><small>Everything around your lessons</small><h2>Learning Hub</h2></div></div>{data.unreadNotifications > 0 && <button className="text-button" onClick={() => void markAllReadMutation.mutateAsync()}>Mark {data.unreadNotifications} read</button>}</div>
-      <div className="invite-workflow">
+    <section id="learning-hub" className="platform-hub learning-hub-redesign section-anchor">
+      <header className="learning-hub-heading">
+        <div className="section-title"><span className="learning-hub-mark"><PixelIcon name="academy" /></span><div><h1>Learning Hub</h1><p>Hello, {learner.name}! Keep building your English skills.</p></div></div>
+        <div className="learning-hub-vitals">
+          <article><span className="vital-icon"><PixelIcon name="sparkle" /></span><span><small>Current level</small><strong>LVL {displayedLevel}</strong><i><b style={{ width: `${Math.min(100, displayedLevel * 10)}%` }} /></i></span></article>
+          <article className="streak"><span className="vital-icon"><PixelIcon name="flame" /></span><span><small>Current streak</small><strong>{displayedStreak} day streak</strong><i><b style={{ width: `${Math.min(100, displayedStreak * 12.5)}%` }} /></i></span></article>
+        </div>
+      </header>
+      <article className="learning-next-card">
+        <span className="learning-next-eyebrow"><PixelIcon name="sparkle" size={15} /> Continue learning</span>
+        <div className="learning-next-art">
+          <img src={learningBook} alt="A glowing open book on a stone altar in an enchanted forest" />
+          <span>LVL {displayedLevel}</span>
+        </div>
+        <div className="learning-next-copy">
+          <h2>{recommendation?.courseTitle || 'English Adventure Foundations'}</h2>
+          <p>Build your base with essential vocabulary,<br className="desktop-break" /> grammar, and comprehension.</p>
+          <div className="learning-next-progress"><i><b style={{ width: `${lessonProgress}%` }} /></i><span><strong>{lessonProgress}%</strong> complete</span></div>
+          <div className="learning-next-actions">
+            <button className="primary-button" disabled={!recommendation} onClick={() => recommendation && onResumeLesson(recommendation)}>Resume lesson <span className="button-arrow">›</span></button>
+            <button className="secondary-button" disabled={!recommendation} onClick={() => recommendation && onResumeLesson(recommendation)}>View lesson</button>
+          </div>
+        </div>
+        <div className="learning-next-guide">
+          <span className="guide-speech">Great job!<br />Keep going!</span>
+          <img src={learningGuide} alt="A friendly pixel wizard holding a glowing crystal staff" />
+          <i className="guide-spark one" aria-hidden="true">+</i>
+          <i className="guide-spark two" aria-hidden="true">✦</i>
+          <i className="guide-grass" aria-hidden="true" />
+        </div>
+      </article>
+      <div className="learning-quick-grid">
+        <button type="button" className="learning-quick-card" onClick={() => document.getElementById('join-classroom')?.scrollIntoView({ behavior: 'smooth' })}><span className="quick-icon people"><PixelIcon name="profile" /></span><div><strong>Join classroom</strong><small>Enter an invitation code<br />to join a class.</small></div><span className="quick-arrow">›</span></button>
+        <button type="button" className="learning-quick-card" onClick={() => document.getElementById('hub-calendar')?.scrollIntoView({ behavior: 'smooth' })}><span className="quick-icon calendar"><PixelIcon name="clock" /></span><div><strong>Calendar</strong><small>See upcoming events<br />and due dates.</small></div><span className="quick-arrow">›</span></button>
+        <button type="button" className="learning-quick-card" onClick={() => document.getElementById('hub-certificates')?.scrollIntoView({ behavior: 'smooth' })}><span className="quick-icon certificate"><PixelIcon name="trophy" /></span><div><strong>Certificates</strong><small>View your earned<br />certificates.</small></div><span className="quick-arrow">›</span></button>
+      </div>
+      <div className="learning-hub-columns">
+        <article className="learning-notification-preview">
+          <header><h3><PixelIcon name="magic" /> Notifications</h3><button className="text-button" onClick={() => void markAllReadMutation.mutateAsync()}>View all</button></header>
+          <div className="learning-notification-list">
+            {hubNotifications.map((item, index) => <div className="learning-list-row notification-preview-row" key={item.id}>
+              <span className={`row-icon icon-${index}`}><PixelIcon name={item.icon} /></span>
+              <span className="row-copy"><strong>{item.title}</strong><small>{item.body}</small></span>
+              <time>{item.time}</time>{item.unread && <i className="unread-dot" aria-label="Unread" />}
+            </div>)}
+            {!hubNotifications.length && <Empty>No new notifications.</Empty>}
+          </div>
+        </article>
+        <article className="learning-discussion-preview">
+          <header><h3><PixelIcon name="magic" /> Course discussion</h3><button type="button" className="text-button" onClick={() => document.querySelector('.discussion-thread-panel')?.scrollIntoView({ behavior: 'smooth' })}>View all</button></header>
+          <div className="learning-discussion-list">
+            {hubDiscussions.map((item, index) => <div className="learning-list-row discussion-preview-row" key={item.id}>
+              <span className={`discussion-avatar avatar-${index}`}><PixelIcon name="profile" /></span>
+              <span className="row-copy"><strong>{item.authorName}</strong><small>{item.body}</small></span>
+              <time>{item.time}</time><span className="reply-count"><PixelIcon name="scroll" size={13} /> {item.replies}</span>
+            </div>)}
+            {!hubDiscussions.length && <Empty>Start the first course discussion.</Empty>}
+          </div>
+          <form onSubmit={post}><div><input value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Ask a question or help a classmate..." required /><button className="primary-button" disabled={!discussionCourse}>Post</button></div></form>
+        </article>
+      </div>
+      <div className="learning-hub-secondary-title"><span>More learning tools</span>{data.unreadNotifications > 0 && <button className="text-button" onClick={() => void markAllReadMutation.mutateAsync()}>Mark {data.unreadNotifications} read</button>}</div>
+      <div id="join-classroom" className="invite-workflow">
         <form onSubmit={inspectInvite}><h3>Join a classroom</h3><div><input value={inviteCode} onChange={(event) => setInviteCode(event.target.value.toUpperCase())} placeholder="Enter invitation code" required /><button className="secondary-button">Preview</button></div></form>
         {invite && <article className={`invite-preview ${invite.state}`}><span className={`status-pill ${invite.state}`}>{invite.state}</span><h3>{invite.classroomName}</h3><strong>{invite.teacherName}</strong><small>{invite.courseTitle}{invite.assignmentTitle ? ` · Assignment: ${invite.assignmentTitle}` : ''}</small>{invite.expiresAt && <small>Expires {new Date(invite.expiresAt).toLocaleString()}</small>}<button className="secondary-button" disabled={invite.state !== 'available'} onClick={() => void acceptInvite()}>{invite.approvalRequired ? 'Request access' : 'Join classroom'}</button></article>}
       </div>
       {!!data.invitationStates?.length && <div className="invitation-history"><h3>Invitation activity</h3>{data.invitationStates.map((item) => { const state = item.revokedAt ? 'revoked' : item.expiresAt && new Date(item.expiresAt) <= new Date() ? 'expired' : item.status; return <div className="hub-row" key={item.id}><strong>{item.classroomName}</strong><span className={`status-pill ${state}`}>{state}</span><small>{item.teacherName} · {item.courseTitle}</small></div>; })}</div>}
       <div className="hub-grid">
         <NotificationsPanel data={data} notify={notify} />
-        <article><h3><PixelIcon name="clock" /> Calendar</h3>{data.events.slice(0, 5).map((item) => <button type="button" className="hub-row calendar-event-button" key={item.id} onClick={() => setSelectedEvent(item)}><strong>{item.title}</strong><small>{new Date(item.startsAt).toLocaleString()} {item.classroomName || item.courseTitle ? `· ${item.classroomName || item.courseTitle}` : ''}</small></button>)}{!data.events.length && <Empty>No upcoming events.</Empty>}</article>
+        <article id="hub-calendar"><h3><PixelIcon name="clock" /> Calendar</h3>{data.events.slice(0, 5).map((item) => <button type="button" className="hub-row calendar-event-button" key={item.id} onClick={() => setSelectedEvent(item)}><strong>{item.title}</strong><small>{new Date(item.startsAt).toLocaleString()} {item.classroomName || item.courseTitle ? `· ${item.classroomName || item.courseTitle}` : ''}</small></button>)}{!data.events.length && <Empty>No upcoming events.</Empty>}</article>
         <article><h3><PixelIcon name="academy" /> Classrooms</h3>{data.classrooms.map((item) => <div className="hub-row" key={item.id}><strong>{item.name}</strong><small>{item.teacherName} · {item.courseTitle}</small><button className="text-button danger-text" onClick={() => void leave(item.id)}>Leave</button></div>)}{!data.classrooms.length && <Empty>Enter an invitation code to join a classroom.</Empty>}</article>
-        <article><h3><PixelIcon name="trophy" /> Certificates</h3>{data.certificates?.map((item) => <a className="hub-row" href={`/certificates/${encodeURIComponent(item.verificationCode)}`} target="_blank" rel="noreferrer" key={item.id}><strong>{item.courseTitle}</strong><small>Issued {new Date(item.issuedAt).toLocaleDateString()} · {item.verificationCode}</small></a>)}{!data.certificates?.length && <Empty>Complete a course to earn a verified certificate.</Empty>}</article>
+        <article id="hub-certificates"><h3><PixelIcon name="trophy" /> Certificates</h3>{data.certificates?.map((item) => <a className="hub-row" href={`/certificates/${encodeURIComponent(item.verificationCode)}`} target="_blank" rel="noreferrer" key={item.id}><strong>{item.courseTitle}</strong><small>Issued {new Date(item.issuedAt).toLocaleDateString()} · {item.verificationCode}</small></a>)}{!data.certificates?.length && <Empty>Complete a course to earn a verified certificate.</Empty>}</article>
       </div>
 
       {!!data.catalog?.length && <div className="hub-block"><h3>Course catalog</h3><div className="catalog-strip">{data.catalog.map((course) => <article key={course.id}><span>{course.difficulty}</span><strong>{course.title}</strong><small>{course.teacherName} · {course.lessonCount} lessons</small><button disabled={course.enrolled || course.enrollmentMode !== 'self'} onClick={() => void enrollCourseMutation.mutateAsync(course.id).catch((error) => notify(error.message))}>{course.enrolled ? 'Enrolled' : course.enrollmentMode === 'self' ? 'Enroll' : 'Invite only'}</button></article>)}</div></div>}

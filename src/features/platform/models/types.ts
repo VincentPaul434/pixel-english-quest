@@ -1,4 +1,4 @@
-import type { TeacherCourse, TeacherStudent, User } from '../../academy/models/types';
+import type { LessonSummary, TeacherCourse, TeacherStudent, User } from '../../academy/models/types';
 
 export type Notification = { id: string; type: string; title: string; body: string; link: string | null; readAt: string | null; createdAt: string };
 export type CalendarEvent = { id: string; courseId: string | null; classroomId: string | null; title: string; description: string; startsAt: string; endsAt: string | null; eventType: string; courseTitle?: string; classroomName?: string; attendance?: Array<{ studentId: string; studentName: string; studentEmail: string; status: 'present' | 'absent' | 'late' | 'excused'; note: string; markedAt: string }> };
@@ -46,5 +46,11 @@ export type PlatformData = {
   admin?: AdminData['summary'];
 };
 
-export type StudentLearningHubProps = { courses: Array<{ id: string; title: string }>; notify: (message: string) => void };
+export type StudentLearningHubProps = {
+  courses: Array<{ id: string; title: string }>;
+  learner: { name: string; level: number; streak: number; progress: number };
+  recommendation: LessonSummary | null;
+  onResumeLesson: (lesson: LessonSummary) => void;
+  notify: (message: string) => void;
+};
 export type TeacherOperationsProps = { courses: TeacherCourse[]; students: TeacherStudent[]; assignments: Array<{ id: string; title: string; courseId: string }>; user: User; notify: (message: string) => void };

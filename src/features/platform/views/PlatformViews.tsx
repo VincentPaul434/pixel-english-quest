@@ -8,10 +8,9 @@ import {
   useEnrollCourseMutation, useGradeWorkMutation, useJoinClassroomMutation, useLeaveClassroomMutation,
   useMarkAllReadMutation, useMarkAttendanceMutation, useMarkNotificationReadMutation, usePostDiscussionMutation, useRemoveClassroomStudentMutation, useRemoveClassroomStudentsMutation,
   useRegenerateMfaRecoveryCodesMutation, useRequestVerificationMutation, useResolveJoinRequestMutation, useRevokeInvitationMutation,
-  useSetAccountStatusMutation, useSetAdminMutation, useSetUserRoleMutation, useSetupMfaMutation, useSubmitWorkMutation, useUpdateBankQuestionMutation, useUpdateNotificationPreferencesMutation, useUploadAssetMutation
+  useSetAccountStatusMutation, useSetAdminMutation, useSetUserRoleMutation, useSetupMfaMutation, useUpdateBankQuestionMutation, useUpdateNotificationPreferencesMutation
 } from '../../../hooks/mutations/platformMutations';
 import { useAdminQuery, useInvitationQuery, usePlatformQuery } from '../../../hooks/queries/platformQueries';
-import { MAX_UPLOAD_BYTES, UPLOAD_ACCEPT } from '../models/api';
 import type { CalendarEvent, PlatformData, StudentLearningHubProps, TeacherOperationsProps } from '../models/types';
 
 function Empty({ children }: { children: string }) {
@@ -160,23 +159,16 @@ function AccountSecurity({ data, notify }: { data: PlatformData; notify: (messag
   );
 }
 
-export function StudentLearningHub({ courses, assignments, notify }: StudentLearningHubProps) {
+export function StudentLearningHub({ courses, notify }: StudentLearningHubProps) {
   const platformQuery = usePlatformQuery();
   const markAllReadMutation = useMarkAllReadMutation();
   const enrollCourseMutation = useEnrollCourseMutation();
   const postDiscussionMutation = usePostDiscussionMutation();
-  const submitWorkMutation = useSubmitWorkMutation();
   const joinClassroomMutation = useJoinClassroomMutation();
   const leaveClassroomMutation = useLeaveClassroomMutation();
-  const uploadMutation = useUploadAssetMutation();
   const data = platformQuery.data;
   const [discussionCourse, setDiscussionCourse] = useState(courses[0]?.id || '');
   const [message, setMessage] = useState('');
-  const [submission, setSubmission] = useState({ assignmentId: assignments.find((item) => item.status === 'assigned')?.id || '', text: '', attachmentUrl: '' });
-  const [uploadDetails, setUploadDetails] = useState<{ name: string; size: number; type: string; previewUrl: string } | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadError, setUploadError] = useState('');
-  const [uploadController, setUploadController] = useState<AbortController | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [inviteCode, setInviteCode] = useState(() => new URLSearchParams(window.location.search).get('invite') || '');
   const [previewCode, setPreviewCode] = useState(inviteCode);
@@ -185,9 +177,6 @@ export function StudentLearningHub({ courses, assignments, notify }: StudentLear
   useEffect(() => {
     if (invitationQuery.error) notify(invitationQuery.error instanceof Error ? invitationQuery.error.message : 'Could not open invitation.');
   }, [invitationQuery.error, notify]);
-  useEffect(() => () => {
-    if (uploadDetails?.previewUrl) URL.revokeObjectURL(uploadDetails.previewUrl);
-  }, [uploadDetails?.previewUrl]);
   const availableCourses = useMemo(() => [...new Map(courses.map((course) => [course.id, course])).values()], [courses]);
   if (platformQuery.isError) return <section id="learning-hub" className="panel platform-hub section-anchor"><div className="modal-loading"><PixelIcon name="close" /><p>{platformQuery.error instanceof Error ? platformQuery.error.message : 'Could not load the learning hub.'}</p></div></section>;
   if (!data) return <section id="learning-hub" className="panel platform-hub section-anchor"><div className="modal-loading"><PixelIcon name="sparkle" /><p>Loading your learning hub...</p></div></section>;
@@ -198,11 +187,6 @@ export function StudentLearningHub({ courses, assignments, notify }: StudentLear
       await postDiscussionMutation.mutateAsync({ courseId: discussionCourse, body: message });
       setMessage(''); notify('Discussion posted.');
     } catch (error) { notify(error instanceof Error ? error.message : 'Could not post.'); }
-  };
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    try { await submitWorkMutation.mutateAsync({ assignmentId: submission.assignmentId, textContent: submission.text, attachmentUrl: submission.attachmentUrl }); setSubmission({ ...submission, text: '', attachmentUrl: '' }); setUploadDetails(null); setUploadProgress(0); notify('Work submitted to your teacher.'); }
-    catch (error) { notify(error instanceof Error ? error.message : 'Could not submit work.'); }
   };
   const inspectInvite = async (event: FormEvent) => {
     event.preventDefault();
@@ -222,36 +206,6 @@ export function StudentLearningHub({ courses, assignments, notify }: StudentLear
     try { await leaveClassroomMutation.mutateAsync(classroomId); notify('You left the classroom.'); }
     catch (error) { notify(error instanceof Error ? error.message : 'Could not leave classroom.'); }
   };
-  const chooseAttachment = async (file: File) => {
-    setUploadError('');
-    setUploadProgress(0);
-    setSubmission((current) => ({ ...current, attachmentUrl: '' }));
-    if (!file.size || file.size > MAX_UPLOAD_BYTES) {
-      setUploadDetails(null);
-      setUploadError('Choose a file between 1 byte and 10 MB.');
-      return;
-    }
-    const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
-    setUploadDetails({ name: file.name, size: file.size, type: file.type, previewUrl });
-    const controller = new AbortController();
-    setUploadController(controller);
-    try {
-      const attachmentUrl = await uploadMutation.mutateAsync({ file, signal: controller.signal, onProgress: setUploadProgress });
-      setSubmission((current) => ({ ...current, attachmentUrl }));
-      notify('File uploaded and ready to submit.');
-    } catch (reason) {
-      const message = reason instanceof DOMException && reason.name === 'AbortError' ? 'Upload cancelled.' : reason instanceof Error ? reason.message : 'Could not upload the file.';
-      setUploadError(message);
-      setSubmission((current) => ({ ...current, attachmentUrl: '' }));
-    } finally { setUploadController(null); }
-  };
-  const removeAttachment = () => {
-    uploadController?.abort();
-    setUploadDetails(null);
-    setUploadProgress(0);
-    setUploadError('');
-    setSubmission((current) => ({ ...current, attachmentUrl: '' }));
-  };
 
   return (
     <section id="learning-hub" className="panel platform-hub section-anchor">
@@ -270,9 +224,8 @@ export function StudentLearningHub({ courses, assignments, notify }: StudentLear
 
       {!!data.catalog?.length && <div className="hub-block"><h3>Course catalog</h3><div className="catalog-strip">{data.catalog.map((course) => <article key={course.id}><span>{course.difficulty}</span><strong>{course.title}</strong><small>{course.teacherName} · {course.lessonCount} lessons</small><button disabled={course.enrolled || course.enrollmentMode !== 'self'} onClick={() => void enrollCourseMutation.mutateAsync(course.id).catch((error) => notify(error.message))}>{course.enrolled ? 'Enrolled' : course.enrollmentMode === 'self' ? 'Enroll' : 'Invite only'}</button></article>)}</div></div>}
 
-      <div className="hub-forms">
+      <div className="hub-forms single-form">
         <form onSubmit={post}><h3>Course discussion</h3><select value={discussionCourse} onChange={(event) => setDiscussionCourse(event.target.value)}>{availableCourses.map((course) => <option value={course.id} key={course.id}>{course.title}</option>)}</select><textarea rows={3} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Ask a question or help a classmate" required /><button className="secondary-button" disabled={!discussionCourse}>Post message</button></form>
-        <form onSubmit={submit}><h3>Submit assignment work</h3><select value={submission.assignmentId} onChange={(event) => setSubmission({ ...submission, assignmentId: event.target.value })}><option value="">Choose an assignment</option>{assignments.filter((item) => item.status === 'assigned').map((item) => <option value={item.id} key={item.id}>{item.title}</option>)}</select><textarea rows={3} value={submission.text} onChange={(event) => setSubmission({ ...submission, text: event.target.value })} placeholder="Write or paste your work" /><label className="file-field">Optional file <small>Images, PDF, text, or Office documents up to 10 MB.</small><input type="file" accept={UPLOAD_ACCEPT} disabled={uploadMutation.isPending} onChange={(event) => { const file = event.target.files?.[0]; if (file) void chooseAttachment(file); event.target.value = ''; }} /></label>{uploadDetails && <div className="upload-preview">{uploadDetails.previewUrl && <img src={uploadDetails.previewUrl} alt={`Preview of ${uploadDetails.name}`} />}<span><strong>{uploadDetails.name}</strong><small>{(uploadDetails.size / 1024 / 1024).toFixed(2)} MB</small></span><button type="button" className="text-button danger-text" onClick={removeAttachment}>{uploadMutation.isPending ? 'Cancel' : 'Remove'}</button>{uploadMutation.isPending && <progress max={100} value={uploadProgress} aria-label={`Uploading ${uploadDetails.name}`}>{uploadProgress}%</progress>}</div>}{uploadError && <small className="form-error" role="alert">{uploadError}</small>}{submission.attachmentUrl && <small className="success-text">File uploaded and ready to submit.</small>}<button className="secondary-button" disabled={uploadMutation.isPending || !submission.assignmentId || (!submission.text && !submission.attachmentUrl)}>Submit to teacher</button></form>
       </div>
       <DiscussionThreads data={data} courses={availableCourses} notify={notify} />
       {data.submissions.length > 0 && <div className="submission-strip"><h3>Your submissions</h3>{data.submissions.slice(0, 6).map((item) => <article key={item.id}><strong>{item.assignmentTitle}</strong><span className={`status-pill ${item.status}`}>{item.status}</span><small>{item.score == null ? 'Awaiting feedback' : `${item.score}/${item.maxScore} · ${item.feedback}`}</small></article>)}</div>}
@@ -347,7 +300,7 @@ export function TeacherOperations({ courses, students, assignments, user, notify
       <section className="panel roster-manager"><div className="section-title-row"><div className="section-title"><PixelIcon name="academy" /><div><small>Rosters & controlled access</small><h2>Classrooms</h2></div></div><label className="compact-search">Search rosters<input value={rosterSearch} onChange={(event) => setRosterSearch(event.target.value)} type="search" placeholder="Name or email" /></label></div><div className="classroom-grid">{data.classrooms.map((item) => { const students = data.rosters?.find((roster) => roster.classroomId === item.id)?.students || []; const query = rosterSearch.trim().toLocaleLowerCase(); const visible = query ? students.filter((student) => `${student.name} ${student.email}`.toLocaleLowerCase().includes(query)) : students; const selected = selectedStudents[item.id] || []; return <article className="roster-card" key={item.id}><strong>{item.name}</strong><small>{item.courseTitle} · {students.length} learners</small><form className="roster-add" onSubmit={(event) => void addStudent(event, item.id)}><input type="email" value={rosterEmails[item.id] || ''} onChange={(event) => setRosterEmails((current) => ({ ...current, [item.id]: event.target.value }))} placeholder="Student email address" required /><button className="secondary-button" disabled={addStudentMutation.isPending}>Add</button></form>{visible.map((student) => <div className="roster-person" key={student.id}><input type="checkbox" checked={selected.includes(student.id)} onChange={(event) => toggleStudent(item.id, student.id, event.target.checked)} aria-label={`Select ${student.name}`} /><span><strong>{student.name}</strong><small>{student.email}</small></span><button className="danger-button" onClick={() => void removeStudent(item.id, student.id)}>Remove</button></div>)}{!visible.length && <Empty>{students.length ? 'No learners match this search.' : 'No learners are enrolled yet.'}</Empty>}<button className="danger-button roster-bulk" disabled={!selected.length || removeStudentsMutation.isPending} onClick={() => void bulkRemoveStudents(item.id)}>Remove selected ({selected.length})</button></article>; })}{!data.classrooms.length && <Empty>Create a classroom to organize a course roster.</Empty>}</div></section>
       <section className="panel invitation-admin"><div className="section-title-row"><div className="section-title"><PixelIcon name="lock" /><div><small>Pending approvals</small><h2>Join requests</h2></div></div><span className="section-hint">{data.joinRequests?.filter((item) => item.status === 'pending').length || 0} pending</span></div>{data.joinRequests?.filter((item) => item.status === 'pending').map((item) => <article key={item.id}><span><strong>{item.studentName}</strong><small>{item.studentEmail} · {item.classroomName}{item.assignmentTitle ? ` · ${item.assignmentTitle}` : ''}</small></span><div><button onClick={() => void decideRequest(item.id, 'accepted')}>Approve</button><button className="danger-button" onClick={() => void decideRequest(item.id, 'rejected')}>Reject</button></div></article>)}{!data.joinRequests?.some((item) => item.status === 'pending') && <Empty>No pending join requests.</Empty>}</section>
       <section className="panel invitation-admin"><div className="section-title-row"><div className="section-title"><PixelIcon name="magic" /><div><small>Codes, links & limits</small><h2>Invitations</h2></div></div></div>{data.invitations?.map((item) => { const inactive = Boolean(item.revokedAt || (item.expiresAt && new Date(item.expiresAt) <= new Date()) || (item.usageLimit != null && item.usesCount >= item.usageLimit)); return <article key={item.id}><span><code>{item.code}</code><strong>{item.classroomName}</strong><small>{item.assignmentTitle || 'Whole classroom'} · {item.approvalRequired ? 'Approval required' : 'Instant join'} · {item.usesCount}/{item.usageLimit ?? '∞'} uses{item.expiresAt ? ` · expires ${new Date(item.expiresAt).toLocaleString()}` : ''}</small></span><div><button disabled={inactive} onClick={() => void copyInvite(item.code)}>Copy link</button><button className="danger-button" disabled={Boolean(item.revokedAt)} onClick={() => void revoke(item.id)}>{item.revokedAt ? 'Revoked' : 'Revoke'}</button></div></article>; })}{!data.invitations?.length && <Empty>No invitations yet.</Empty>}</section>
-      <section className="panel"><div className="section-title-row"><div className="section-title"><PixelIcon name="scroll" /><div><small>Manual feedback & rubric-ready records</small><h2>Submission inbox</h2></div></div><span className="section-hint">{data.submissions.filter((item) => item.status !== 'graded').length} to grade</span></div><div className="grading-list">{data.submissions.map((item) => <article key={item.id}><div><strong>{item.studentName} · {item.assignmentTitle}</strong><small>{item.courseTitle} · attempt {item.attemptNumber} · {new Date(item.submittedAt).toLocaleString()}</small><p>{item.textContent || 'Attachment submission'}</p></div><span>{item.score == null ? 'Pending' : `${item.score}/${item.maxScore}`}</span><button onClick={() => void grade(item.id, item.maxScore)}>{item.status === 'graded' ? 'Regrade' : 'Grade'}</button></article>)}{!data.submissions.length && <Empty>Learner submissions will arrive here.</Empty>}</div></section>
+      <section className="panel submission-inbox"><div className="section-title-row"><div className="section-title"><PixelIcon name="scroll" /><div><small>Manual feedback & rubric-ready records</small><h2>Submission inbox</h2></div></div><span className="section-hint">{data.submissions.filter((item) => item.status !== 'graded').length} to grade</span></div><div className="grading-list">{data.submissions.map((item) => <article key={item.id}><div><strong>{item.studentName} · {item.assignmentTitle}</strong><small>{item.courseTitle} · attempt {item.attemptNumber} · {new Date(item.submittedAt).toLocaleString()}</small><p>{item.textContent || 'Attachment submission'}</p></div><span>{item.score == null ? 'Pending' : `${item.score}/${item.maxScore}`}</span><button onClick={() => void grade(item.id, item.maxScore)}>{item.status === 'graded' ? 'Regrade' : 'Grade'}</button></article>)}{!data.submissions.length && <Empty>Learner submissions will arrive here.</Empty>}</div></section>
       <div className="hub-grid teacher-hub-grid"><NotificationsPanel data={data} notify={notify} /><article><h3>Upcoming events</h3>{data.events.slice(0, 8).map((item) => <button type="button" className="hub-row calendar-event-button" key={item.id} onClick={() => setSelectedEventId(item.id)}><strong>{item.title}</strong><small>{new Date(item.startsAt).toLocaleString()} · {item.classroomName || item.courseTitle || 'Academy'}</small></button>)}</article><article><h3>Recent discussion</h3>{data.discussions.slice(0, 8).map((item) => <div className="hub-row" key={item.id}><strong>{item.authorName}</strong><small>{item.body}</small></div>)}</article><article><h3>Reusable questions</h3>{data.questionBank?.slice(0, 8).map((item) => <div className="hub-row" key={item.id}><strong>{item.prompt}</strong><small>{item.type} · {item.tags.join(', ') || 'untagged'}</small></div>)}</article></div>
       <DiscussionThreads data={data} courses={courses} notify={notify} composer />
       <section className="panel question-bank-manager"><div className="section-title-row"><div className="section-title"><PixelIcon name="brain" /><div><small>Reusable assessment library</small><h2>Question bank</h2></div></div><div className="bank-filters"><input type="search" value={bankSearch} onChange={(event) => setBankSearch(event.target.value)} placeholder="Search questions or tags" aria-label="Search question bank" /><select value={bankType} onChange={(event) => setBankType(event.target.value)} aria-label="Filter question bank by type"><option value="all">All types</option><option value="multiple_choice">Multiple choice</option><option value="fill_blank">Fill blank</option><option value="true_false">True or false</option><option value="essay">Essay</option></select></div></div><div className="bank-question-list">{visibleBankQuestions.map((item) => <article key={item.id}><span><strong>{item.prompt}</strong><small>{item.type} · {item.tags.join(', ') || 'untagged'}</small>{item.explanation && <p>{item.explanation}</p>}</span><div><button onClick={() => editBankQuestion(item)}>Edit</button><button className="danger-button" disabled={deleteBankQuestionMutation.isPending} onClick={() => void deleteBankQuestionItem(item.id)}>Delete</button></div></article>)}{!visibleBankQuestions.length && <Empty>No questions match these filters.</Empty>}</div></section>

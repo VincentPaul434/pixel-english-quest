@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 
 const focusableSelector = [
   'a[href]',
@@ -10,6 +10,12 @@ const focusableSelector = [
 ].join(',');
 
 export function useDialogFocus(containerRef: RefObject<HTMLElement | null>, onClose: () => void) {
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
@@ -25,7 +31,7 @@ export function useDialogFocus(containerRef: RefObject<HTMLElement | null>, onCl
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== 'Tab') return;
@@ -58,5 +64,5 @@ export function useDialogFocus(containerRef: RefObject<HTMLElement | null>, onCl
       document.body.style.overflow = previousOverflow;
       previouslyFocused?.focus();
     };
-  }, [containerRef, onClose]);
+  }, [containerRef]);
 }

@@ -1,4 +1,4 @@
-import type { Assignment, TeacherCourse, TeacherStudent, User } from '../../academy/models/types';
+import type { TeacherCourse, TeacherStudent, User } from '../../academy/models/types';
 
 export type Notification = { id: string; type: string; title: string; body: string; link: string | null; readAt: string | null; createdAt: string };
 export type CalendarEvent = { id: string; courseId: string | null; classroomId: string | null; title: string; description: string; startsAt: string; endsAt: string | null; eventType: string; courseTitle?: string; classroomName?: string; attendance?: Array<{ studentId: string; studentName: string; studentEmail: string; status: 'present' | 'absent' | 'late' | 'excused'; note: string; markedAt: string }> };
@@ -8,7 +8,8 @@ export type Classroom = { id: string; name: string; code: string; courseId: stri
 export type ClassroomInvitation = { id: string; code: string; classroomId: string; classroomName: string; assignmentId: string | null; assignmentTitle: string | null; approvalRequired: boolean; usageLimit: number | null; usesCount: number; expiresAt: string | null; revokedAt: string | null; createdAt: string };
 export type InvitationPreview = { id: string; code: string; classroomId: string; classroomName: string; courseId: string; courseTitle: string; teacherName: string; assignmentId: string | null; assignmentTitle: string | null; approvalRequired: boolean; usageLimit: number | null; usesCount: number; expiresAt: string | null; state: 'available' | 'pending' | 'accepted' | 'rejected' | 'expired' | 'revoked' };
 export type JoinRequest = { id: string; invitationId: string; studentId: string; studentName: string; studentEmail: string; classroomId: string; classroomName: string; assignmentTitle: string | null; status: 'pending' | 'accepted' | 'rejected'; requestedAt: string; resolvedAt: string | null };
-export type Submission = { id: string; assignmentId: string; assignmentTitle: string; courseTitle: string; studentId?: string; studentName?: string; studentEmail?: string; textContent: string; attachmentUrl: string | null; status: string; score: number | null; maxScore: number; feedback: string; submittedAt: string; gradedAt: string | null; attemptNumber: number };
+export type RubricResult = { criterion: string; points: number; comment: string };
+export type Submission = { id: string; assignmentId: string; assignmentTitle: string; courseTitle: string; studentId?: string; studentName?: string; studentEmail?: string; textContent: string; attachmentUrl: string | null; status: string; score: number | null; maxScore: number; feedback: string; rubric: RubricResult[]; submittedAt: string; gradedAt: string | null; attemptNumber: number };
 export type Certificate = { id: string; courseId: string; courseTitle: string; verificationCode: string; issuedAt: string };
 export type VerifiedCertificate = {
   valid: true;
@@ -45,5 +46,5 @@ export type PlatformData = {
   admin?: AdminData['summary'];
 };
 
-export type StudentLearningHubProps = { courses: Array<{ id: string; title: string }>; assignments: Assignment[]; notify: (message: string) => void };
+export type StudentLearningHubProps = { courses: Array<{ id: string; title: string }>; notify: (message: string) => void };
 export type TeacherOperationsProps = { courses: TeacherCourse[]; students: TeacherStudent[]; assignments: Array<{ id: string; title: string; courseId: string }>; user: User; notify: (message: string) => void };

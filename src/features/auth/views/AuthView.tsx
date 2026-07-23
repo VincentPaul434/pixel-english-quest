@@ -1,5 +1,5 @@
 import { PixelIcon } from '../../../shared-components/PixelIcon';
-import pixelWizard from '../../../assets/pixel-wizard.png';
+import pixelWizard from '../../../assets/pixel-wizard.webp';
 import type { AuthViewProps } from '../models/types';
 import { useAuthViewModel } from '../viewModels/useAuthViewModel';
 

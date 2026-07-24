@@ -8,12 +8,13 @@ import {
   useAddClassroomStudentByEmailMutation, useConfirmVerificationMutation, useCreateBankQuestionMutation, useCreateClassroomMutation, useCreateEventMutation, useDeleteBankQuestionMutation,
   useCreateInvitationMutation, useDisableMfaMutation, useDownloadTeacherReportMutation, useEnableMfaMutation,
   useEnrollCourseMutation, useGradeWorkMutation, useJoinClassroomMutation, useLeaveClassroomMutation,
-  useMarkAllReadMutation, useMarkAttendanceMutation, useMarkNotificationReadMutation, usePostDiscussionMutation, useRemoveClassroomStudentMutation, useRemoveClassroomStudentsMutation,
+  useMarkAttendanceMutation, useMarkNotificationReadMutation, usePostDiscussionMutation, useRemoveClassroomStudentMutation, useRemoveClassroomStudentsMutation,
   useRegenerateMfaRecoveryCodesMutation, useRequestVerificationMutation, useResolveJoinRequestMutation, useRevokeInvitationMutation,
   useSetAccountStatusMutation, useSetAdminMutation, useSetUserRoleMutation, useSetupMfaMutation, useUpdateBankQuestionMutation, useUpdateNotificationPreferencesMutation
 } from '../../../hooks/mutations/platformMutations';
 import { useAdminQuery, useInvitationQuery, usePlatformQuery } from '../../../hooks/queries/platformQueries';
 import type { CalendarEvent, PlatformData, StudentLearningHubProps, TeacherOperationsProps } from '../models/types';
+import { CalendarModal, CertificatesModal, JoinClassroomModal } from './student-hub';
 
 function Empty({ children }: { children: string }) {
   return <p className="hub-empty">{children}</p>;
@@ -201,7 +202,6 @@ function AccountSecurity({ data, notify }: { data: PlatformData; notify: (messag
 
 export function StudentLearningHub({ courses, learner, recommendation, onResumeLesson, notify }: StudentLearningHubProps) {
   const platformQuery = usePlatformQuery();
-  const markAllReadMutation = useMarkAllReadMutation();
   const enrollCourseMutation = useEnrollCourseMutation();
   const postDiscussionMutation = usePostDiscussionMutation();
   const joinClassroomMutation = useJoinClassroomMutation();
@@ -209,7 +209,7 @@ export function StudentLearningHub({ courses, learner, recommendation, onResumeL
   const data = platformQuery.data;
   const [discussionCourse, setDiscussionCourse] = useState(courses[0]?.id || '');
   const [message, setMessage] = useState('');
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [hubModal, setHubModal] = useState<'join' | 'calendar' | 'certificates' | 'discussions' | 'notifications' | null>(null);
   const [inviteCode, setInviteCode] = useState(() => new URLSearchParams(window.location.search).get('invite') || '');
   const [previewCode, setPreviewCode] = useState(inviteCode);
   const invitationQuery = useInvitationQuery(previewCode, Boolean(previewCode));
@@ -311,13 +311,13 @@ export function StudentLearningHub({ courses, learner, recommendation, onResumeL
         </div>
       </article>
       <div className="learning-quick-grid">
-        <button type="button" className="learning-quick-card" onClick={() => document.getElementById('join-classroom')?.scrollIntoView({ behavior: 'smooth' })}><span className="quick-icon people"><PixelIcon name="profile" /></span><div><strong>Join classroom</strong><small>Enter an invitation code<br />to join a class.</small></div><span className="quick-arrow">›</span></button>
-        <button type="button" className="learning-quick-card" onClick={() => document.getElementById('hub-calendar')?.scrollIntoView({ behavior: 'smooth' })}><span className="quick-icon calendar"><PixelIcon name="clock" /></span><div><strong>Calendar</strong><small>See upcoming events<br />and due dates.</small></div><span className="quick-arrow">›</span></button>
-        <button type="button" className="learning-quick-card" onClick={() => document.getElementById('hub-certificates')?.scrollIntoView({ behavior: 'smooth' })}><span className="quick-icon certificate"><PixelIcon name="trophy" /></span><div><strong>Certificates</strong><small>View your earned<br />certificates.</small></div><span className="quick-arrow">›</span></button>
+        <button type="button" className="learning-quick-card" onClick={() => setHubModal('join')}><span className="quick-icon people"><PixelIcon name="profile" /></span><div><strong>Join classroom</strong><small>Enter an invitation code<br />to join a class.</small></div><span className="quick-arrow">›</span></button>
+        <button type="button" className="learning-quick-card" onClick={() => setHubModal('calendar')}><span className="quick-icon calendar"><PixelIcon name="clock" /></span><div><strong>Calendar</strong><small>See upcoming events<br />and due dates.</small></div><span className="quick-arrow">›</span></button>
+        <button type="button" className="learning-quick-card" onClick={() => setHubModal('certificates')}><span className="quick-icon certificate"><PixelIcon name="trophy" /></span><div><strong>Certificates</strong><small>View your earned<br />certificates.</small></div><span className="quick-arrow">›</span></button>
       </div>
       <div className="learning-hub-columns">
         <article className="learning-notification-preview">
-          <header><h3><PixelIcon name="magic" /> Notifications</h3><button className="text-button" onClick={() => void markAllReadMutation.mutateAsync()}>View all</button></header>
+          <header><h3><PixelIcon name="magic" /> Notifications</h3><button className="text-button" onClick={() => setHubModal('notifications')}>View all</button></header>
           <div className="learning-notification-list">
             {hubNotifications.map((item, index) => <div className="learning-list-row notification-preview-row" key={item.id}>
               <span className={`row-icon icon-${index}`}><PixelIcon name={item.icon} /></span>
@@ -328,7 +328,7 @@ export function StudentLearningHub({ courses, learner, recommendation, onResumeL
           </div>
         </article>
         <article className="learning-discussion-preview">
-          <header><h3><PixelIcon name="magic" /> Course discussion</h3><button type="button" className="text-button" onClick={() => document.querySelector('.discussion-thread-panel')?.scrollIntoView({ behavior: 'smooth' })}>View all</button></header>
+          <header><h3><PixelIcon name="magic" /> Course discussion</h3><button type="button" className="text-button" onClick={() => setHubModal('discussions')}>View all</button></header>
           <div className="learning-discussion-list">
             {hubDiscussions.map((item, index) => <div className="learning-list-row discussion-preview-row" key={item.id}>
               <span className={`discussion-avatar avatar-${index}`}><PixelIcon name="profile" /></span>
@@ -340,28 +340,16 @@ export function StudentLearningHub({ courses, learner, recommendation, onResumeL
           <form onSubmit={post}><div><input value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Ask a question or help a classmate..." required /><button className="primary-button" disabled={!discussionCourse}>Post</button></div></form>
         </article>
       </div>
-      <div className="learning-hub-secondary-title"><span>More learning tools</span>{data.unreadNotifications > 0 && <button className="text-button" onClick={() => void markAllReadMutation.mutateAsync()}>Mark {data.unreadNotifications} read</button>}</div>
-      <div id="join-classroom" className="invite-workflow">
-        <form onSubmit={inspectInvite}><h3>Join a classroom</h3><div><input value={inviteCode} onChange={(event) => setInviteCode(event.target.value.toUpperCase())} placeholder="Enter invitation code" required /><button className="secondary-button">Preview</button></div></form>
-        {invite && <article className={`invite-preview ${invite.state}`}><span className={`status-pill ${invite.state}`}>{invite.state}</span><h3>{invite.classroomName}</h3><strong>{invite.teacherName}</strong><small>{invite.courseTitle}{invite.assignmentTitle ? ` · Assignment: ${invite.assignmentTitle}` : ''}</small>{invite.expiresAt && <small>Expires {new Date(invite.expiresAt).toLocaleString()}</small>}<button className="secondary-button" disabled={invite.state !== 'available'} onClick={() => void acceptInvite()}>{invite.approvalRequired ? 'Request access' : 'Join classroom'}</button></article>}
-      </div>
-      {!!data.invitationStates?.length && <div className="invitation-history"><h3>Invitation activity</h3>{data.invitationStates.map((item) => { const state = item.revokedAt ? 'revoked' : item.expiresAt && new Date(item.expiresAt) <= new Date() ? 'expired' : item.status; return <div className="hub-row" key={item.id}><strong>{item.classroomName}</strong><span className={`status-pill ${state}`}>{state}</span><small>{item.teacherName} · {item.courseTitle}</small></div>; })}</div>}
-      <div className="hub-grid">
-        <NotificationsPanel data={data} notify={notify} />
-        <article id="hub-calendar"><h3><PixelIcon name="clock" /> Calendar</h3>{data.events.slice(0, 5).map((item) => <button type="button" className="hub-row calendar-event-button" key={item.id} onClick={() => setSelectedEvent(item)}><strong>{item.title}</strong><small>{new Date(item.startsAt).toLocaleString()} {item.classroomName || item.courseTitle ? `· ${item.classroomName || item.courseTitle}` : ''}</small></button>)}{!data.events.length && <Empty>No upcoming events.</Empty>}</article>
-        <article><h3><PixelIcon name="academy" /> Classrooms</h3>{data.classrooms.map((item) => <div className="hub-row" key={item.id}><strong>{item.name}</strong><small>{item.teacherName} · {item.courseTitle}</small><button className="text-button danger-text" onClick={() => void leave(item.id)}>Leave</button></div>)}{!data.classrooms.length && <Empty>Enter an invitation code to join a classroom.</Empty>}</article>
-        <article id="hub-certificates"><h3><PixelIcon name="trophy" /> Certificates</h3>{data.certificates?.map((item) => <a className="hub-row" href={`/certificates/${encodeURIComponent(item.verificationCode)}`} target="_blank" rel="noreferrer" key={item.id}><strong>{item.courseTitle}</strong><small>Issued {new Date(item.issuedAt).toLocaleDateString()} · {item.verificationCode}</small></a>)}{!data.certificates?.length && <Empty>Complete a course to earn a verified certificate.</Empty>}</article>
-      </div>
 
       {!!data.catalog?.length && <div className="hub-block"><h3>Course catalog</h3><div className="catalog-strip">{data.catalog.map((course) => <article key={course.id}><span>{course.difficulty}</span><strong>{course.title}</strong><small>{course.teacherName} · {course.lessonCount} lessons</small><button disabled={course.enrolled || course.enrollmentMode !== 'self'} onClick={() => void enrollCourseMutation.mutateAsync(course.id).catch((error) => notify(error.message))}>{course.enrolled ? 'Enrolled' : course.enrollmentMode === 'self' ? 'Enroll' : 'Invite only'}</button></article>)}</div></div>}
 
-      <div className="hub-forms single-form">
-        <form onSubmit={post}><h3>Course discussion</h3><select value={discussionCourse} onChange={(event) => setDiscussionCourse(event.target.value)}>{availableCourses.map((course) => <option value={course.id} key={course.id}>{course.title}</option>)}</select><textarea rows={3} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Ask a question or help a classmate" required /><button className="secondary-button" disabled={!discussionCourse}>Post message</button></form>
-      </div>
-      <DiscussionThreads data={data} courses={availableCourses} notify={notify} />
       {data.submissions.length > 0 && <div className="submission-strip"><h3>Your submissions</h3>{data.submissions.slice(0, 6).map((item) => <article key={item.id}><strong>{item.assignmentTitle}</strong><span className={`status-pill ${item.status}`}>{item.status}</span><small>{item.score == null ? 'Awaiting feedback' : `${item.score}/${item.maxScore} · ${item.feedback}`}</small></article>)}</div>}
       <AccountSecurity data={data} notify={notify} />
-      {selectedEvent && <CalendarEventDialog event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
+      {hubModal === 'join' && <JoinClassroomModal data={data} invite={invite} inviteCode={inviteCode} onAccept={() => void acceptInvite()} onClose={() => setHubModal(null)} onInspect={inspectInvite} onInviteCodeChange={setInviteCode} onLeave={(classroomId) => void leave(classroomId)} />}
+      {hubModal === 'calendar' && <CalendarModal events={data.events} onClose={() => setHubModal(null)} />}
+      {hubModal === 'certificates' && <CertificatesModal certificates={data.certificates} onClose={() => setHubModal(null)} />}
+      {hubModal === 'notifications' && <ModalFrame label="Notifications" onClose={() => setHubModal(null)}><div className="modal-heading compact"><span><PixelIcon name="magic" /></span><div><small>Updates</small><h2>Notifications</h2><p>Your latest learning activity in one place.</p></div></div><NotificationsPanel data={data} notify={notify} /></ModalFrame>}
+      {hubModal === 'discussions' && <ModalFrame label="Course discussions" onClose={() => setHubModal(null)} wide><div className="modal-heading compact"><span><PixelIcon name="magic" /></span><div><small>Course community</small><h2>Course discussions</h2><p>Ask questions, share ideas, and reply to classmates.</p></div></div>{isReferenceDemo && !liveDiscussions.length ? <section className="discussion-stream hub-modal-section">{referenceDiscussions.map((item) => <article key={item.id}><strong>{item.authorName}</strong><span>English Adventure Foundations</span><p>{item.body}</p><small>{item.time} · {item.replies} replies</small></article>)}</section> : <DiscussionThreads data={data} courses={availableCourses} notify={notify} composer />}</ModalFrame>}
     </section>
   );
 }

@@ -1063,6 +1063,15 @@ html:has(.student-shell-learning-hub)::-webkit-scrollbar { width: 0; height: 0; 
 .invite-workflow form, .invite-preview, .invitation-history { display: grid; align-content: start; gap: 9px; padding: 16px; border: 1px solid #29457e; border-radius: 10px; background: rgba(4, 19, 58, .72); }
 .invite-workflow form > div { display: flex; gap: 8px; }
 .invite-workflow input { min-width: 0; flex: 1; color: white; }
+.hub-modal-content { margin-top: 0; }
+.hub-modal-section { display: grid; gap: 8px; margin-top: 16px; padding: 16px; border: 1px solid #29457e; border-radius: 10px; background: rgba(4, 19, 58, .72); }
+.hub-modal-section > h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font: 700 16px var(--pixel); }
+.hub-modal-section .hub-row { width: 100%; }
+.hub-modal-back { margin: 0 0 8px; }
+.quest-modal > .notification-panel { padding: 16px; border: 1px solid #29457e; border-radius: 10px; background: rgba(4, 19, 58, .72); }
+.quest-modal > .notification-panel > h3 { display: none; }
+.quest-modal .discussion-thread-panel { margin-top: 0; }
+.quest-modal .discussion-thread-panel > .section-title-row { display: none; }
 .invite-preview > .status-pill { justify-self: start; }
 .invitation-history { margin-top: 14px; }
 .invitation-history > h3 { margin: 0; font: 700 16px var(--pixel); }

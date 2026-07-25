@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient, type MutationFunction } from '@tanstack/react-query';
 import type { AdminData, PlatformData } from '../../features/platform/models/types';
 import {
-  confirmVerification, createBankQuestion, createClassroom, createClassroomInvitation, createEvent, disableMfa,
-  downloadTeacherReport, enableMfa, enrollCourse, gradeWork, joinClassroom, leaveClassroom, markAllRead, postDiscussion,
-  removeClassroomStudent, requestVerification, resolveJoinRequest, revokeClassroomInvitation, setAdmin,
-  setupMfa, submitWork, uploadAsset
+  addClassroomStudentByEmail, confirmVerification, createBankQuestion, createClassroom, createClassroomInvitation, createEvent, deleteBankQuestion, disableMfa,
+  downloadTeacherReport, enableMfa, enrollCourse, gradeWork, joinClassroom, leaveClassroom, markAllRead, markAttendance, markNotificationRead, postDiscussion,
+  regenerateMfaRecoveryCodes, removeClassroomStudent, removeClassroomStudents, requestVerification, resolveJoinRequest, revokeClassroomInvitation, setAccountStatus, setAdmin, setUserRole,
+  setupMfa, submitWork, updateBankQuestion, updateNotificationPreferences, uploadAsset
 } from '../../features/platform/models/api';
 import { platformKeys, sessionKeys, studentKeys, teacherKeys } from '../queryKeys';
 
@@ -49,7 +49,7 @@ export function usePostDiscussionMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: [...platformKeys.all, 'discussions', 'post'],
-    mutationFn: ({ courseId, body }: { courseId: string; body: string }) => postDiscussion(courseId, body),
+    mutationFn: ({ courseId, body, parentId }: { courseId: string; body: string; parentId?: string }) => postDiscussion(courseId, body, parentId),
     onSuccess: (discussions) => queryClient.setQueryData<PlatformData>(platformKeys.overview(), (data) => data ? { ...data, discussions } : data)
   });
 }
@@ -137,8 +137,20 @@ export function useCreateEventMutation() {
   return usePlatformDataMutation([...platformKeys.all, 'calendar', 'create'], createEvent);
 }
 
+export function useMarkAttendanceMutation() {
+  return usePlatformDataMutation([...platformKeys.all, 'calendar', 'attendance'], ({ eventId, studentId, status, note }: { eventId: string; studentId: string; status: 'present' | 'absent' | 'late' | 'excused'; note?: string }) => markAttendance(eventId, { studentId, status, note }));
+}
+
 export function useCreateBankQuestionMutation() {
   return usePlatformDataMutation([...platformKeys.all, 'question-bank', 'create'], createBankQuestion);
+}
+
+export function useUpdateBankQuestionMutation() {
+  return usePlatformDataMutation([...platformKeys.all, 'question-bank', 'update'], ({ questionId, payload }: { questionId: string; payload: Parameters<typeof updateBankQuestion>[1] }) => updateBankQuestion(questionId, payload));
+}
+
+export function useDeleteBankQuestionMutation() {
+  return usePlatformDataMutation([...platformKeys.all, 'question-bank', 'delete'], deleteBankQuestion);
 }
 
 export function useSetAdminMutation() {
@@ -152,6 +164,32 @@ export function useSetAdminMutation() {
 
 export function useUploadAssetMutation() {
   return useMutation({ mutationKey: [...platformKeys.all, 'assets', 'upload'], mutationFn: uploadAsset });
+}
+
+export function useSetUserRoleMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({ mutationKey: [...platformKeys.admin(), 'set-role'], mutationFn: ({ userId, role }: { userId: string; role: 'student' | 'teacher' }) => setUserRole(userId, role), onSuccess: (data: AdminData) => queryClient.setQueryData(platformKeys.admin(), data) });
+}
+
+export function useSetAccountStatusMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({ mutationKey: [...platformKeys.admin(), 'set-status'], mutationFn: ({ userId, status }: { userId: string; status: 'active' | 'suspended' | 'deactivated' }) => setAccountStatus(userId, status), onSuccess: (data: AdminData) => queryClient.setQueryData(platformKeys.admin(), data) });
+}
+
+export function useAddClassroomStudentByEmailMutation() {
+  return usePlatformDataMutation([...platformKeys.all, 'classrooms', 'add-student-by-email'], ({ classroomId, email }: { classroomId: string; email: string }) => addClassroomStudentByEmail(classroomId, email));
+}
+
+export function useRemoveClassroomStudentsMutation() {
+  return usePlatformDataMutation([...platformKeys.all, 'classrooms', 'remove-students'], ({ classroomId, studentIds }: { classroomId: string; studentIds: string[] }) => removeClassroomStudents(classroomId, studentIds));
+}
+
+export function useMarkNotificationReadMutation() {
+  return usePlatformDataMutation([...platformKeys.all, 'notifications', 'read'], markNotificationRead);
+}
+
+export function useUpdateNotificationPreferencesMutation() {
+  return usePlatformDataMutation([...platformKeys.all, 'notifications', 'preferences'], updateNotificationPreferences);
 }
 
 export function useDownloadTeacherReportMutation() {
@@ -186,4 +224,8 @@ export function useEnableMfaMutation() {
 export function useDisableMfaMutation() {
   const queryClient = useQueryClient();
   return useMutation({ mutationKey: [...sessionKeys.all, 'mfa', 'disable'], mutationFn: disableMfa, onSuccess: () => queryClient.invalidateQueries({ queryKey: platformKeys.overview() }) });
+}
+
+export function useRegenerateMfaRecoveryCodesMutation() {
+  return useMutation({ mutationKey: [...sessionKeys.all, 'mfa', 'recovery-codes'], mutationFn: regenerateMfaRecoveryCodes });
 }

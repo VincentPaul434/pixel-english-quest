@@ -1,5 +1,6 @@
-import { useEffect, type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { PixelIcon } from '../PixelIcon';
+import { useDialogFocus } from './useDialogFocus';
 
 type ModalFrameProps = {
   children: ReactNode;
@@ -10,16 +11,13 @@ type ModalFrameProps = {
 };
 
 export function ModalFrame({ children, onClose, label, wide = false, contentClassName = 'quest-modal' }: ModalFrameProps) {
-  useEffect(() => {
-    const close = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
-    window.addEventListener('keydown', close);
-    return () => window.removeEventListener('keydown', close);
-  }, [onClose]);
+  const contentRef = useRef<HTMLElement>(null);
+  useDialogFocus(contentRef, onClose);
 
   return (
     <div className="modal-layer" role="dialog" aria-modal="true" aria-label={label}>
       <button className="modal-scrim" onClick={onClose} aria-label={`Dismiss ${label}`} />
-      <section className={`${wide ? `${contentClassName} wide-modal` : contentClassName} panel`}>
+      <section ref={contentRef} tabIndex={-1} className={`${wide ? `${contentClassName} wide-modal` : contentClassName} panel`}>
         <button className="modal-close icon-button" onClick={onClose} aria-label={`Close ${label}`}>
           <PixelIcon name="close" />
         </button>

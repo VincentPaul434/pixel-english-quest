@@ -1,28 +1,30 @@
+import { lazy } from 'react';
 import { ModalFrame } from '../../../shared-components/ModalFrame';
 import { PixelIcon, type PixelIconName } from '../../../shared-components/PixelIcon';
-import pixelWizard from '../../../assets/pixel-wizard.png';
+import pixelWizard from '../../../assets/pixel-wizard.webp';
 import { categoryDetails } from '../student-constants';
-import { dueLabel, formatMinutes, iconForActivity } from '../student-formatters';
+import { formatMinutes, iconForActivity } from '../student-formatters';
+import { avatarOptionFor } from '../../academy/models/avatars';
 import type {
   Category,
-  LessonSummary,
-  StudentDashboardData,
-  User,
   VocabularyItem
 } from '../../academy/models/types';
 import type { LessonDialogProps, OnboardingProps, ProfileEditorProps, QuickQuizDialogProps, StudentWorkspaceViewProps, VocabularyPanelProps } from '../models/types';
 import { useLessonDialogViewModel, useOnboardingViewModel, useProfileEditorViewModel, useQuickQuizDialogViewModel, useVocabularyPanelViewModel } from '../viewModels/useStudentPanelsViewModel';
 import { useStudentWorkspaceViewModel } from '../viewModels/useStudentWorkspaceViewModel';
-import { StudentLearningHub } from '../../platform';
+
+const StudentLearningHub = lazy(() => import('../../platform').then((module) => ({ default: module.StudentLearningHub })));
+const StudentAssignmentsView = lazy(() => import('./StudentAssignmentsView').then((module) => ({ default: module.StudentAssignmentsView })));
 
 function ProfileEditor(props: ProfileEditorProps) {
-  const { profile, onClose } = props;
+  const { profile, onClose, onLogout, onReset } = props;
   const { busy, dailyGoal, error, learningGoal, name, proficiency, save, setDailyGoal, setLearningGoal, setName, setProficiency } = useProfileEditorViewModel(props);
+  const avatar = avatarOptionFor(profile.avatarId, profile.role);
 
   return (
-    <ModalFrame onClose={onClose} label="learning profile">
+    <ModalFrame onClose={onClose} label="learning profile" contentClassName="profile-modal">
       <form className="settings-form" onSubmit={save}>
-        <span className="profile-avatar large"><img src={pixelWizard} alt="" /></span>
+        <span className="profile-avatar large"><img src={avatar.src} alt="" /></span>
         <span className="overline">Learner settings</span>
         <h2>Shape your adventure</h2>
         <div className="form-grid two-columns">
@@ -33,6 +35,10 @@ function ProfileEditor(props: ProfileEditorProps) {
         </div>
         {error && <div className="form-error">{error}</div>}
         <button className="primary-button" disabled={busy}>{busy ? 'Saving...' : 'Save learning profile'}</button>
+        <div className="profile-modal-actions">
+          <button type="button" onClick={onReset}><PixelIcon name="reset" /> Reset learning data</button>
+          <button type="button" onClick={onLogout}><PixelIcon name="logout" /> Sign out</button>
+        </div>
       </form>
     </ModalFrame>
   );
@@ -49,9 +55,9 @@ function Onboarding(props: OnboardingProps) {
         <h1>Build your learning path</h1>
         <p>These choices help the academy recommend the right quest and pace.</p>
         <div className="onboarding-steps">
-          <fieldset><legend>1. Where are you starting?</legend><div className="choice-cards">{['Beginner', 'Intermediate', 'Advanced'].map((value) => <button type="button" className={proficiency === value ? 'active' : ''} onClick={() => setProficiency(value)} key={value}>{value}</button>)}</div></fieldset>
-          <fieldset><legend>2. What is your main goal?</legend><div className="choice-cards goals">{['Speak and understand everyday English', 'Improve reading and vocabulary', 'Strengthen grammar for school or work'].map((value) => <button type="button" className={learningGoal === value ? 'active' : ''} onClick={() => setLearningGoal(value)} key={value}>{value}</button>)}</div></fieldset>
-          <fieldset><legend>3. Choose a daily target</legend><div className="choice-cards">{[5, 10, 15, 20, 30].map((value) => <button type="button" className={dailyGoal === value ? 'active' : ''} onClick={() => setDailyGoal(value)} key={value}>{value} min</button>)}</div></fieldset>
+          <fieldset><legend>1. Where are you starting?</legend><div className="choice-cards">{['Beginner', 'Intermediate', 'Advanced'].map((value) => <button type="button" aria-pressed={proficiency === value} className={proficiency === value ? 'active' : ''} onClick={() => setProficiency(value)} key={value}>{value}</button>)}</div></fieldset>
+          <fieldset><legend>2. What is your main goal?</legend><div className="choice-cards goals">{['Speak and understand everyday English', 'Improve reading and vocabulary', 'Strengthen grammar for school or work'].map((value) => <button type="button" aria-pressed={learningGoal === value} className={learningGoal === value ? 'active' : ''} onClick={() => setLearningGoal(value)} key={value}>{value}</button>)}</div></fieldset>
+          <fieldset><legend>3. Choose a daily target</legend><div className="choice-cards">{[5, 10, 15, 20, 30].map((value) => <button type="button" aria-pressed={dailyGoal === value} className={dailyGoal === value ? 'active' : ''} onClick={() => setDailyGoal(value)} key={value}>{value} min</button>)}</div></fieldset>
         </div>
         <button className="primary-button" onClick={submit} disabled={busy}>{busy ? 'Creating your path...' : 'Enter the academy'} <PixelIcon name="play" /></button>
       </section>
@@ -122,9 +128,9 @@ function QuickQuizDialog(props: QuickQuizDialogProps) {
   const { onClose } = props;
   const { busy, choice, load, question, result, setChoice, submit } = useQuickQuizDialogViewModel(props);
   return (
-    <ModalFrame onClose={onClose} label="quick quiz">
+    <ModalFrame onClose={onClose} label="quick quiz" contentClassName="quick-modal">
       <div className="quick-modal-content"><div className="quiz-orb"><PixelIcon name="quiz" size={44} /></div><span className="overline">Daily pop-up challenge</span><h2>{question?.prompt || 'Summoning a question...'}</h2>
-        {question && <div className="quick-choices">{question.choices.map((answer, index) => { const state = result ? index === result.answer ? 'correct' : index === choice ? 'wrong' : '' : index === choice ? 'selected' : ''; return <button className={state} onClick={() => !result && setChoice(index)} key={answer}><i>{String.fromCharCode(65 + index)}</i><span>{answer}</span>{state === 'correct' && <PixelIcon name="check" />}{state === 'wrong' && <PixelIcon name="close" />}</button>; })}</div>}
+        {question && <div className="quick-choices">{question.choices.map((answer, index) => { const state = result ? index === result.answer ? 'correct' : index === choice ? 'wrong' : '' : index === choice ? 'selected' : ''; return <button type="button" aria-pressed={index === choice} className={state} onClick={() => !result && setChoice(index)} key={answer}><i>{String.fromCharCode(65 + index)}</i><span>{answer}</span>{state === 'correct' && <PixelIcon name="check" />}{state === 'wrong' && <PixelIcon name="close" />}</button>; })}</div>}
         {result ? <div className={`quiz-feedback ${result.correct ? 'success' : ''}`}><strong>{result.correct ? 'Critical hit!' : 'Almost!'}</strong><p>{result.explanation}</p><button className="primary-button" onClick={load}>Next challenge <PixelIcon name="zap" /></button></div> : <button className="primary-button quiz-submit" onClick={submit} disabled={choice === null || busy}>{busy ? 'Checking...' : 'Lock in answer'}</button>}
       </div>
     </ModalFrame>
@@ -143,7 +149,7 @@ function VocabularyPanel(props: VocabularyPanelProps) {
   );
 }
 
-export function StudentWorkspaceView({ initialUser, onLogout, page, onNavigate }: StudentWorkspaceViewProps) {
+export function StudentWorkspaceView({ initialUser, onLogout, page, assignmentId = null, onNavigate }: StudentWorkspaceViewProps) {
   const vm = useStudentWorkspaceViewModel();
   const {
     data,
@@ -175,50 +181,63 @@ export function StudentWorkspaceView({ initialUser, onLogout, page, onNavigate }
     setMenuOpen(false);
     onNavigate(`/student/${destination}`);
   };
+  const isHubDemo = page === 'learning-hub' && data.profile.email === 'student@pixel.academy';
+  const topbarStreak = isHubDemo ? Math.max(4, data.stats.streak) : data.stats.streak;
+  const topbarLevel = isHubDemo ? Math.max(8, data.profile.level) : data.profile.level;
+  const avatar = avatarOptionFor(data.profile.avatarId, data.profile.role);
 
   return (
-    <div className="app-shell student-shell">
+    <div className={`app-shell student-shell student-shell-${page}`}>
       <header className="topbar">
         <button className="icon-button menu-button" onClick={() => setMenuOpen(true)} aria-label="Open menu"><PixelIcon name="menu" /></button>
         <button className="brand" onClick={() => navigate('dashboard')}><span className="brand-mark"><PixelIcon name="academy" size={23} /></span><span>English Pixel</span><i>Academy</i></button>
-        <div className="topbar-spacer" /><div className="streak-chip"><PixelIcon name="flame" size={15} /> {data.stats.streak} day streak</div><div className="level-chip"><PixelIcon name="sparkle" size={14} /> LVL {data.profile.level}</div>
-        <button className="profile-trigger" onClick={() => setProfileOpen(true)}><span className="mini-avatar"><img src={pixelWizard} alt="" /></span><span>{data.profile.name}</span><PixelIcon name="chevronDown" size={17} /></button>
+        <div className="topbar-spacer" /><div className="streak-chip"><PixelIcon name="flame" size={15} /> {topbarStreak} day streak</div><div className="level-chip"><PixelIcon name="sparkle" size={14} /> LVL {topbarLevel}</div>
+        <button className="profile-trigger" onClick={() => setProfileOpen(true)} aria-label={`Open ${data.profile.name}'s learning profile`}><span className="mini-avatar"><img src={avatar.src} alt="" /></span><span>{data.profile.name}</span><PixelIcon name="chevronDown" size={17} /></button>
       </header>
-      <aside className={`side-drawer ${menuOpen ? 'open' : ''}`}><div className="drawer-head"><span className="brand"><span className="brand-mark"><PixelIcon name="academy" /></span><span>English Pixel</span><i>Academy</i></span><button className="icon-button" onClick={() => setMenuOpen(false)}><PixelIcon name="close" /></button></div><nav><button className={page === 'dashboard' ? 'active' : ''} onClick={() => navigate('dashboard')}><PixelIcon name="home" /> Dashboard</button><button className={page === 'courses' ? 'active' : ''} onClick={() => navigate('courses')}><PixelIcon name="book" /> Courses & lessons</button><button className={page === 'assignments' ? 'active' : ''} onClick={() => navigate('assignments')}><PixelIcon name="scroll" /> Assignments</button><button className={page === 'learning-hub' ? 'active' : ''} onClick={() => navigate('learning-hub')}><PixelIcon name="academy" /> Learning hub</button><button className={page === 'study' ? 'active' : ''} onClick={() => navigate('study')}><PixelIcon name="brain" /> Study deck</button><button className={page === 'achievements' ? 'active' : ''} onClick={() => navigate('achievements')}><PixelIcon name="trophy" /> Achievements</button><button className={page === 'activity' ? 'active' : ''} onClick={() => navigate('activity')}><PixelIcon name="magic" /> Activity</button></nav><div className="drawer-tip"><PixelIcon name="flame" size={34} /><strong>{data.profile.dailyGoal} minute daily goal</strong><small>{data.profile.learningGoal}</small></div><button className="drawer-close" onClick={onLogout}><PixelIcon name="logout" /> Sign out</button></aside>
+      <aside className={`side-drawer ${menuOpen ? 'open' : ''}`} aria-hidden={!menuOpen} inert={menuOpen ? undefined : ''}><div className="drawer-head"><span className="brand"><span className="brand-mark"><PixelIcon name="academy" /></span><span>English Pixel</span><i>Academy</i></span><button className="icon-button" onClick={() => setMenuOpen(false)} aria-label="Close menu"><PixelIcon name="close" /></button></div><nav><button aria-current={page === 'dashboard' ? 'page' : undefined} className={page === 'dashboard' ? 'active' : ''} onClick={() => navigate('dashboard')}><PixelIcon name="home" /> Dashboard</button><button aria-current={page === 'courses' ? 'page' : undefined} className={page === 'courses' ? 'active' : ''} onClick={() => navigate('courses')}><PixelIcon name="book" /> Courses & lessons</button><button aria-current={page === 'assignments' ? 'page' : undefined} className={page === 'assignments' ? 'active' : ''} onClick={() => navigate('assignments')}><PixelIcon name="scroll" /> Assignments</button><button aria-current={page === 'learning-hub' ? 'page' : undefined} className={page === 'learning-hub' ? 'active' : ''} onClick={() => navigate('learning-hub')}><PixelIcon name="academy" /> Learning hub</button><button aria-current={page === 'study' ? 'page' : undefined} className={page === 'study' ? 'active' : ''} onClick={() => navigate('study')}><PixelIcon name="brain" /> Study deck</button><button aria-current={page === 'achievements' ? 'page' : undefined} className={page === 'achievements' ? 'active' : ''} onClick={() => navigate('achievements')}><PixelIcon name="trophy" /> Achievements</button><button aria-current={page === 'activity' ? 'page' : undefined} className={page === 'activity' ? 'active' : ''} onClick={() => navigate('activity')}><PixelIcon name="magic" /> Activity</button></nav><div className="drawer-tip"><PixelIcon name="flame" size={34} /><strong>{data.profile.dailyGoal} minute daily goal</strong><small>{data.profile.learningGoal}</small></div><button className="drawer-close" onClick={onLogout}><PixelIcon name="logout" /> Sign out</button></aside>
       {menuOpen && <button className="scrim" onClick={() => setMenuOpen(false)} aria-label="Close menu" />}
 
       <main className={`dashboard student-page student-page-${page}`} aria-label={`${page.replace('-', ' ')} page`}>
-        <section className="welcome-card panel learner-hero"><div><span className="overline"><PixelIcon name="sparkle" size={15} /> Recommended next quest</span><h1>Welcome back, <em>{data.profile.name}!</em></h1><p>{data.recommendation ? `${data.recommendation.title} is ready in ${data.recommendation.courseTitle}.` : 'Every enrolled quest is complete. Practise again to strengthen mastery!'}</p><div className="hero-actions">{data.recommendation && <button className="primary-button" onClick={() => setSelectedLesson(data.recommendation!)}><PixelIcon name="play" /> {data.recommendation.progress?.status === 'in_progress' ? 'Resume lesson' : 'Start next lesson'}</button>}<button className="secondary-button" onClick={() => setQuizOpen(true)}><PixelIcon name="quiz" /> Quick quiz</button></div></div><div className="hero-character"><img className="wizard-art" src={pixelWizard} alt="Pixel wizard reading" /><div className="character-shadow" /></div></section>
+        {page === 'dashboard' && <section className="welcome-card panel learner-hero"><div><span className="overline"><PixelIcon name="sparkle" size={15} /> Recommended next quest</span><h1>Welcome back, <em>{data.profile.name}!</em></h1><p>{data.recommendation ? `${data.recommendation.title} is ready in ${data.recommendation.courseTitle}.` : 'Every enrolled quest is complete. Practise again to strengthen mastery!'}</p><div className="hero-actions">{data.recommendation && <button className="primary-button" onClick={() => setSelectedLesson(data.recommendation!)}><PixelIcon name="play" /> {data.recommendation.progress?.status === 'in_progress' ? 'Resume lesson' : 'Start next lesson'}</button>}<button className="secondary-button" onClick={() => setQuizOpen(true)}><PixelIcon name="quiz" /> Quick quiz</button></div></div><div className="hero-character"><img className="wizard-art" src={pixelWizard} alt="Pixel wizard reading" /><div className="character-shadow" /></div></section>}
 
-        <section className="progress-card panel"><div className="section-title-row"><div className="section-title"><span className="title-icon sword"><PixelIcon name="sword" /></span><div><small>Curriculum mastery</small><h2>Your Progress</h2></div></div><strong className="progress-percent">{data.stats.progress}%</strong></div><div className="progress-track"><div className="progress-fill" style={{ width: `${data.stats.progress}%` }}><i /></div></div><div className="progress-caption"><span>{data.stats.completed} of {data.stats.total} lessons mastered</span><span>{data.stats.total - data.stats.completed} remaining</span></div></section>
-        <section className="stats-grid four-stats"><article className="stat-card panel"><div className="stat-icon blue"><PixelIcon name="book" /></div><div><span>Lessons</span><strong>{data.stats.completed}</strong><small>mastered</small></div></article><article className="stat-card panel"><div className="stat-icon gold"><PixelIcon name="clock" /></div><div><span>Focus time</span><strong>{formatMinutes(data.stats.learningMinutes)}</strong><small>from actual attempts</small></div></article><article className="stat-card panel"><div className="stat-icon amber"><PixelIcon name="trophy" /></div><div><span>Achievements</span><strong>{data.stats.achievements}</strong><small>of {data.achievements.length}</small></div></article><article className="stat-card panel"><div className="stat-icon red"><PixelIcon name="flame" /></div><div><span>Learning streak</span><strong>{data.stats.streak}</strong><small>consecutive days</small></div></article></section>
+        {page === 'dashboard' && <section className="progress-card panel"><div className="section-title-row"><div className="section-title"><span className="title-icon sword"><PixelIcon name="sword" /></span><div><small>Curriculum mastery</small><h2>Your Progress</h2></div></div><strong className="progress-percent">{data.stats.progress}%</strong></div><div className="progress-track"><div className="progress-fill" style={{ width: `${data.stats.progress}%` }}><i /></div></div><div className="progress-caption"><span>{data.stats.completed} of {data.stats.total} lessons mastered</span><span>{data.stats.total - data.stats.completed} remaining</span></div></section>}
+        {page === 'dashboard' && <section className="stats-grid four-stats"><article className="stat-card panel"><div className="stat-icon blue"><PixelIcon name="book" /></div><div><span>Lessons</span><strong>{data.stats.completed}</strong><small>mastered</small></div></article><article className="stat-card panel"><div className="stat-icon gold"><PixelIcon name="clock" /></div><div><span>Focus time</span><strong>{formatMinutes(data.stats.learningMinutes)}</strong><small>from actual attempts</small></div></article><article className="stat-card panel"><div className="stat-icon amber"><PixelIcon name="trophy" /></div><div><span>Achievements</span><strong>{data.stats.achievements}</strong><small>of {data.achievements.length}</small></div></article><article className="stat-card panel"><div className="stat-icon red"><PixelIcon name="flame" /></div><div><span>Learning streak</span><strong>{data.stats.streak}</strong><small>consecutive days</small></div></article></section>}
 
-        <section className="mastery-card panel"><div className="section-title-row"><div className="section-title"><PixelIcon name="brain" className="yellow" /><div><small>Best scores by competency</small><h2>Skill Mastery</h2></div></div><span className="section-hint">Your personalized map</span></div><div className="mastery-grid">{data.skillMastery.map((skill) => <article key={skill.category}><div><PixelIcon name={categoryDetails[skill.category].icon} /><strong>{categoryDetails[skill.category].label}</strong><span>{skill.score}%</span></div><div className="mini-progress"><i style={{ width: `${skill.score}%` }} /></div></article>)}</div></section>
+        {page === 'dashboard' && <section className="mastery-card panel"><div className="section-title-row"><div className="section-title"><PixelIcon name="brain" className="yellow" /><div><small>Best scores by competency</small><h2>Skill Mastery</h2></div></div><span className="section-hint">Your personalized map</span></div><div className="mastery-grid">{data.skillMastery.map((skill) => <article key={skill.category}><div><PixelIcon name={categoryDetails[skill.category].icon} /><strong>{categoryDetails[skill.category].label}</strong><span>{skill.score}%</span></div><div className="mini-progress"><i style={{ width: `${skill.score}%` }} /></div></article>)}</div></section>}
 
-        <section id="assignments" className="assignment-card panel section-anchor"><div className="section-title-row"><div className="section-title"><PixelIcon name="scroll" className="parchment" /><div><small>From your teacher</small><h2>Assignments</h2></div></div><span className="section-hint">{data.assignments.filter((item) => item.status === 'assigned').length} open</span></div>{data.assignments.length ? <div className="assignment-list">{data.assignments.map((item) => <article className={item.status} key={item.id}><span><PixelIcon name={item.status === 'completed' ? 'check' : 'scroll'} /></span><div><strong>{item.title}</strong><small>{item.courseTitle} · {item.lessonTitle}</small></div><time>{item.status === 'completed' ? 'Completed' : `Due ${dueLabel(item.dueAt)}`}</time>{item.status === 'assigned' && <button onClick={() => setSelectedLesson(data.lessons.find((lesson) => lesson.id === item.lessonId) || null)}>Open</button>}</article>)}</div> : <div className="empty-inline"><PixelIcon name="check" /><span><strong>You are all caught up.</strong><small>New teacher assignments will appear here.</small></span></div>}</section>
+        {page === 'assignments' && <StudentAssignmentsView
+          assignments={data.assignments}
+          lessons={data.lessons}
+          selectedAssignmentId={assignmentId}
+          notify={notify}
+          onOpenAssignment={(id) => onNavigate(`/student/assignments/${encodeURIComponent(id)}`)}
+          onOpenLesson={setSelectedLesson}
+          onBack={() => onNavigate('/student/assignments')}
+        />}
 
-        {data.announcements.length > 0 && <section className="announcement-card panel"><div className="section-title-row"><div className="section-title"><PixelIcon name="academy" /><div><small>Classroom noticeboard</small><h2>Announcements</h2></div></div></div><div className="announcement-list">{data.announcements.map((item) => <article key={item.id}><span className="overline">{item.courseTitle}</span><strong>{item.title}</strong><p>{item.body}</p><small>{item.teacherName} · {new Date(item.publishedAt).toLocaleDateString()}</small></article>)}</div></section>}
+        {page === 'dashboard' && data.announcements.length > 0 && <section className="announcement-card panel"><div className="section-title-row"><div className="section-title"><PixelIcon name="academy" /><div><small>Classroom noticeboard</small><h2>Announcements</h2></div></div></div><div className="announcement-list">{data.announcements.map((item) => <article key={item.id}><span className="overline">{item.courseTitle}</span><strong>{item.title}</strong><p>{item.body}</p><small>{item.teacherName} · {new Date(item.publishedAt).toLocaleDateString()}</small></article>)}</div></section>}
 
         {page === 'learning-hub' && <StudentLearningHub
           courses={[...new Map(data.lessons.map((lesson) => [lesson.courseId, { id: lesson.courseId, title: lesson.courseTitle || 'Course' }])).values()]}
-          assignments={data.assignments}
+          learner={{ name: data.profile.name, level: data.profile.level, streak: data.stats.streak, progress: data.stats.progress }}
+          recommendation={data.recommendation || data.lessons[0] || null}
+          onResumeLesson={setSelectedLesson}
           notify={notify}
         />}
 
-        <section id="lessons" className="categories-card panel section-anchor"><div className="section-title-row"><div className="section-title"><PixelIcon className="yellow" name="star" /><div><small>Structured curriculum</small><h2>Courses & Lessons</h2></div></div><span className="section-hint">Draft answers save automatically</span></div><div className="category-tabs"><button className={selectedCategory === 'all' ? 'active' : ''} onClick={() => setSelectedCategory('all')}>All</button>{(Object.keys(categoryDetails) as Category[]).map((category) => <button className={selectedCategory === category ? 'active' : ''} onClick={() => setSelectedCategory(category)} key={category}><PixelIcon name={categoryDetails[category].icon} size={16} /> {categoryDetails[category].label}</button>)}</div><div className="curriculum-grid">{visibleLessons.map((lesson) => <button className={`curriculum-lesson ${lesson.completed ? 'completed' : lesson.progress?.status === 'in_progress' ? 'in-progress' : ''}`} onClick={() => setSelectedLesson(lesson)} key={lesson.id}><span className="lesson-icon"><PixelIcon name={categoryDetails[lesson.category].icon} /></span><div><small>{lesson.courseTitle} · {lesson.moduleTitle}</small><strong>{lesson.title}</strong><p>{lesson.difficulty} · {lesson.minutes} min · {lesson.masteryScore}% mastery</p>{lesson.progress && <div className="lesson-score">Best score: {lesson.progress.bestScore}% · {lesson.progress.attempts} attempt{lesson.progress.attempts === 1 ? '' : 's'}</div>}</div><i>{lesson.completed ? <><PixelIcon name="check" /> Mastered</> : lesson.progress?.status === 'in_progress' ? <>Resume <PixelIcon name="play" /></> : <>Start <PixelIcon name="play" /></>}</i></button>)}</div>{lessons.length > 6 && <button className="show-more" onClick={() => setShowAllLessons((value) => !value)}>{showAllLessons ? 'Show fewer lessons' : `Show all ${lessons.length} lessons`}</button>}</section>
+        {page === 'courses' && <section id="lessons" className="categories-card panel section-anchor"><div className="section-title-row"><div className="section-title"><PixelIcon className="yellow" name="star" /><div><small>Structured curriculum</small><h2>Courses & Lessons</h2></div></div><span className="section-hint">Draft answers save automatically</span></div><div className="category-tabs"><button aria-pressed={selectedCategory === 'all'} className={selectedCategory === 'all' ? 'active' : ''} onClick={() => setSelectedCategory('all')}>All</button>{(Object.keys(categoryDetails) as Category[]).map((category) => <button aria-pressed={selectedCategory === category} className={selectedCategory === category ? 'active' : ''} onClick={() => setSelectedCategory(category)} key={category}><PixelIcon name={categoryDetails[category].icon} size={16} /> {categoryDetails[category].label}</button>)}</div><div className="curriculum-grid">{visibleLessons.map((lesson) => <button className={`curriculum-lesson ${lesson.completed ? 'completed' : lesson.progress?.status === 'in_progress' ? 'in-progress' : ''}`} onClick={() => setSelectedLesson(lesson)} key={lesson.id}><span className="lesson-icon"><PixelIcon name={categoryDetails[lesson.category].icon} /></span><div><small>{lesson.courseTitle} · {lesson.moduleTitle}</small><strong>{lesson.title}</strong><p>{lesson.difficulty} · {lesson.minutes} min · {lesson.masteryScore}% mastery</p>{lesson.progress && <div className="lesson-score">Best score: {lesson.progress.bestScore}% · {lesson.progress.attempts} attempt{lesson.progress.attempts === 1 ? '' : 's'}</div>}</div><i>{lesson.completed ? <><PixelIcon name="check" /> Mastered</> : lesson.progress?.status === 'in_progress' ? <>Resume <PixelIcon name="play" /></> : <>Start <PixelIcon name="play" /></>}</i></button>)}</div>{lessons.length > 6 && <button className="show-more" onClick={() => setShowAllLessons((value) => !value)}>{showAllLessons ? 'Show fewer lessons' : `Show all ${lessons.length} lessons`}</button>}</section>}
 
-        <VocabularyPanel items={data.vocabulary} notify={notify} />
+        {page === 'study' && <VocabularyPanel items={data.vocabulary} notify={notify} />}
 
-        <section id="achievements" className="achievements-card panel section-anchor"><div className="section-title-row"><div className="section-title"><PixelIcon className="yellow" name="award" /><div><small>Treasure shelf</small><h2>Achievements</h2></div></div><span className="section-hint">{data.stats.achievements}/{data.achievements.length} unlocked</span></div><div className="achievement-grid">{data.achievements.map((achievement) => <article className={achievement.unlocked ? 'achievement unlocked' : 'achievement locked'} key={achievement.id}><span><PixelIcon name={achievement.unlocked ? (achievement.icon as PixelIconName) : 'lock'} /></span><div><strong>{achievement.title}</strong><small>{achievement.description}</small></div>{achievement.unlocked && <PixelIcon name="check" size={16} />}</article>)}</div></section>
+        {page === 'achievements' && <section id="achievements" className="achievements-card panel section-anchor"><div className="section-title-row"><div className="section-title"><PixelIcon className="yellow" name="award" /><div><small>Treasure shelf</small><h2>Achievements</h2></div></div><span className="section-hint">{data.stats.achievements}/{data.achievements.length} unlocked</span></div><div className="achievement-grid">{data.achievements.map((achievement) => <article className={achievement.unlocked ? 'achievement unlocked' : 'achievement locked'} key={achievement.id}><span><PixelIcon name={achievement.unlocked ? (achievement.icon as PixelIconName) : 'lock'} /></span><div><strong>{achievement.title}</strong><small>{achievement.description}</small></div>{achievement.unlocked && <PixelIcon name="check" size={16} />}</article>)}</div></section>}
 
-        <section id="activity" className="activity-card panel section-anchor"><div className="section-title-row"><div className="section-title"><PixelIcon className="parchment" name="magic" /><div><small>Complete learning record</small><h2>Recent Activity</h2></div></div></div>{data.activities.length ? <div className="activity-list">{data.activities.map((activity) => <article key={activity.id}><span className="activity-icon"><PixelIcon name={iconForActivity(activity.type)} /></span><div><strong>{activity.title}</strong><small>{activity.detail}</small></div><time>{new Date(activity.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</time></article>)}</div> : <div className="empty-inline"><PixelIcon name="sparkle" /><span><strong>No activity yet.</strong><small>Your attempts and study milestones will appear here.</small></span></div>}</section>
-        <footer><PixelIcon name="sparkle" size={14} /> English Pixel Academy · Learn a little. Adventure a lot. <PixelIcon name="sparkle" size={14} /></footer>
+        {page === 'activity' && <section id="activity" className="activity-card panel section-anchor"><div className="section-title-row"><div className="section-title"><PixelIcon className="parchment" name="magic" /><div><small>Complete learning record</small><h2>Recent Activity</h2></div></div></div>{data.activities.length ? <div className="activity-list">{data.activities.map((activity) => <article key={activity.id}><span className="activity-icon"><PixelIcon name={iconForActivity(activity.type)} /></span><div><strong>{activity.title}</strong><small>{activity.detail}</small></div><time>{new Date(activity.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</time></article>)}</div> : <div className="empty-inline"><PixelIcon name="sparkle" /><span><strong>No activity yet.</strong><small>Your attempts and study milestones will appear here.</small></span></div>}</section>}
+        <footer className="student-footer"><PixelIcon name="sparkle" size={14} /> English Pixel Academy · Learn a little. Adventure a lot. <PixelIcon name="sparkle" size={14} /></footer>
       </main>
 
       {selectedLesson && <LessonDialog summary={selectedLesson} onClose={() => setSelectedLesson(null)} notify={notify} />}
       {quizOpen && <QuickQuizDialog onClose={() => setQuizOpen(false)} notify={notify} />}
-      {profileOpen && <ProfileEditor profile={data.profile} onClose={() => setProfileOpen(false)} />}
-      {profileOpen && <div className="profile-floating-actions"><button onClick={reset}><PixelIcon name="reset" /> Reset my learning data</button><button onClick={onLogout}><PixelIcon name="logout" /> Sign out</button></div>}
+      {profileOpen && <ProfileEditor profile={data.profile} onClose={() => setProfileOpen(false)} onReset={reset} onLogout={onLogout} />}
       {toast && <div className="toast" role="status"><PixelIcon name="sparkle" /> {toast}</div>}
     </div>
   );

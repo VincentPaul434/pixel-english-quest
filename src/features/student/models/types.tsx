@@ -6,6 +6,7 @@ export type StudentWorkspaceViewProps = {
   initialUser: User;
   onLogout: () => void;
   page: StudentPage;
+  assignmentId?: string | null;
   onNavigate: (path: string) => void;
 };
 
@@ -80,6 +81,8 @@ export type LessonLoadState = {
 export type ProfileEditorProps = {
   profile: User;
   onClose: () => void;
+  onReset: () => void;
+  onLogout: () => void;
 };
 
 export type ProfileEditorViewModel = {

@@ -1,10 +1,13 @@
+import { useRef } from 'react';
 import { PixelIcon } from '../../../shared-components/PixelIcon';
+import { useDialogFocus } from '../../../shared-components/ModalFrame';
 import type { Category, QuestionType } from '../../academy/models/types';
 import type { LessonEditorViewProps } from '../models/types';
 import { useLessonEditorViewModel } from '../viewModels/useLessonEditorViewModel';
 
 export function LessonEditorView(props: LessonEditorViewProps) {
   const vm = useLessonEditorViewModel(props);
+  const editorRef = useRef<HTMLElement>(null);
   const {
     blankQuestion,
     busy,
@@ -20,13 +23,14 @@ export function LessonEditorView(props: LessonEditorViewProps) {
     setForm,
     updateQuestion
   } = vm;
+  useDialogFocus(editorRef, onClose);
 
   if (vm.loading) return <div className="modal-layer"><div className="editor-loading panel"><PixelIcon name="sparkle" size={50} /><p>Loading lesson workshop...</p></div></div>;
 
   return (
     <div className="modal-layer editor-layer" role="dialog" aria-modal="true" aria-label="Lesson editor">
       <button className="modal-scrim" onClick={onClose} aria-label="Dismiss lesson editor" />
-      <section className="lesson-editor panel">
+      <section ref={editorRef} tabIndex={-1} className="lesson-editor panel">
         <header className="editor-header"><div><span className="overline"><PixelIcon name="magic" size={15} /> Teacher lesson workshop</span><h2>{vm.lessonId ? 'Edit lesson' : 'Create a new lesson'}</h2><p>Build content, media, assessment, and mastery rules in one place.</p></div><div><button className="secondary-button" onClick={vm.togglePreview}><PixelIcon name={vm.preview ? 'pencil' : 'play'} /> {vm.preview ? 'Edit' : 'Preview'}</button><button className="icon-button" onClick={vm.onClose} aria-label="Close lesson editor"><PixelIcon name="close" /></button></div></header>
 
         {vm.preview ? (
@@ -57,12 +61,12 @@ export function LessonEditorView(props: LessonEditorViewProps) {
               <div className="editor-section-title"><span>4</span><div><h3>Assessment questions</h3><p>Mix choice, true/false, fill-in, essay, matching, and ordering questions.</p></div></div>
               <div className="question-builder">{form.questions.map((question, index) => (
                 <article className="question-editor" key={index}>
-                  <header><strong>Question {index + 1}</strong><div><button type="button" onClick={() => moveQuestion(index, -1)} disabled={index === 0}>↑</button><button type="button" onClick={() => moveQuestion(index, 1)} disabled={index === form.questions.length - 1}>↓</button><button type="button" className="danger-link" onClick={() => setForm({ ...form, questions: form.questions.filter((_, questionIndex) => questionIndex !== index) })} disabled={form.questions.length === 1}><PixelIcon name="close" size={14} /> Remove</button></div></header>
+                  <header><strong>Question {index + 1}</strong><div><button type="button" aria-label={`Move question ${index + 1} up`} onClick={() => moveQuestion(index, -1)} disabled={index === 0}>↑</button><button type="button" aria-label={`Move question ${index + 1} down`} onClick={() => moveQuestion(index, 1)} disabled={index === form.questions.length - 1}>↓</button><button type="button" className="danger-link" aria-label={`Remove question ${index + 1}`} onClick={() => setForm({ ...form, questions: form.questions.filter((_, questionIndex) => questionIndex !== index) })} disabled={form.questions.length === 1}><PixelIcon name="close" size={14} /> Remove</button></div></header>
                   <div className="form-grid two-columns">
                     <label className="span-two">Prompt<input value={question.prompt} onChange={(event) => updateQuestion(index, { prompt: event.target.value })} placeholder="Ask a clear question" /></label>
                     <label>Question type<select value={question.type} onChange={(event) => changeType(index, event.target.value as QuestionType)}><option value="multiple_choice">Multiple choice</option><option value="true_false">True or false</option><option value="fill_blank">Fill in the blank</option><option value="essay">Essay response</option><option value="matching">Matching sequence</option><option value="ordering">Ordering</option></select></label>
                     {['fill_blank', 'essay'].includes(question.type) ? <label>{question.type === 'essay' ? 'Model answer (optional)' : 'Correct answer'}<input value={String(question.answer)} onChange={(event) => updateQuestion(index, { answer: event.target.value })} /></label> : ['matching', 'ordering'].includes(question.type) ? <label>Correct sequence <small>Comma-separated item numbers</small><input value={Array.isArray(question.answer) ? question.answer.map((value) => value + 1).join(',') : ''} onChange={(event) => updateQuestion(index, { answer: event.target.value.split(',').map((value) => Number(value.trim()) - 1).filter((value) => value >= 0) })} /></label> : <label>Correct choice<select value={Number(question.answer)} onChange={(event) => updateQuestion(index, { answer: Number(event.target.value) })}>{question.choices.map((choice, choiceIndex) => <option value={choiceIndex} key={choiceIndex}>{String.fromCharCode(65 + choiceIndex)} · {choice || `Choice ${choiceIndex + 1}`}</option>)}</select></label>}
-                    {!['fill_blank', 'essay'].includes(question.type) && <div className="choice-editor span-two">{question.choices.map((choice, choiceIndex) => <label key={choiceIndex}><span>{String.fromCharCode(65 + choiceIndex)}</span><input value={choice} onChange={(event) => updateQuestion(index, { choices: question.choices.map((item, itemIndex) => itemIndex === choiceIndex ? event.target.value : item) })} placeholder={`${['matching', 'ordering'].includes(question.type) ? 'Item' : 'Choice'} ${choiceIndex + 1}`} />{question.type !== 'true_false' && question.choices.length > 2 && <button type="button" onClick={() => updateQuestion(index, { choices: question.choices.filter((_, itemIndex) => itemIndex !== choiceIndex), answer: ['matching', 'ordering'].includes(question.type) ? question.choices.filter((_, itemIndex) => itemIndex !== choiceIndex).map((_, answerIndex) => answerIndex) : 0 })}><PixelIcon name="close" size={13} /></button>}</label>)}{question.type !== 'true_false' && question.choices.length < 12 && <button type="button" onClick={() => updateQuestion(index, { choices: [...question.choices, ''], answer: ['matching', 'ordering'].includes(question.type) ? [...question.choices, ''].map((_, answerIndex) => answerIndex) : question.answer })}>+ Add item</button>}</div>}
+                    {!['fill_blank', 'essay'].includes(question.type) && <div className="choice-editor span-two">{question.choices.map((choice, choiceIndex) => <label key={choiceIndex}><span>{String.fromCharCode(65 + choiceIndex)}</span><input value={choice} onChange={(event) => updateQuestion(index, { choices: question.choices.map((item, itemIndex) => itemIndex === choiceIndex ? event.target.value : item) })} placeholder={`${['matching', 'ordering'].includes(question.type) ? 'Item' : 'Choice'} ${choiceIndex + 1}`} />{question.type !== 'true_false' && question.choices.length > 2 && <button type="button" aria-label={`Remove choice ${choiceIndex + 1} from question ${index + 1}`} onClick={() => updateQuestion(index, { choices: question.choices.filter((_, itemIndex) => itemIndex !== choiceIndex), answer: ['matching', 'ordering'].includes(question.type) ? question.choices.filter((_, itemIndex) => itemIndex !== choiceIndex).map((_, answerIndex) => answerIndex) : 0 })}><PixelIcon name="close" size={13} /></button>}</label>)}{question.type !== 'true_false' && question.choices.length < 12 && <button type="button" onClick={() => updateQuestion(index, { choices: [...question.choices, ''], answer: ['matching', 'ordering'].includes(question.type) ? [...question.choices, ''].map((_, answerIndex) => answerIndex) : question.answer })}>+ Add item</button>}</div>}
                     <label>Points<input type="number" min={1} max={100} value={question.points || 1} onChange={(event) => updateQuestion(index, { points: Number(event.target.value) })} /></label>
                     <label className="span-two">Answer explanation<textarea rows={2} value={question.explanation || ''} onChange={(event) => updateQuestion(index, { explanation: event.target.value })} placeholder="Explain why the answer is correct" /></label>
                   </div>

@@ -7,6 +7,7 @@ export interface User {
   email: string;
   name: string;
   role: Role;
+  avatarId: string;
   proficiency: string;
   learningGoal: string;
   dailyGoal: number;
@@ -15,6 +16,7 @@ export interface User {
   emailVerified: boolean;
   locale: string;
   mfaEnabled: boolean;
+  accountStatus: 'active' | 'suspended' | 'deactivated';
   xp: number;
   level: number;
 }

@@ -1,4 +1,5 @@
 import type { ChangeEventHandler, FormEventHandler } from 'react';
+import type { AvatarOption } from '../../academy/models/avatars';
 import type { Role, User } from '../../academy/models/types';
 
 export type AuthMode = 'login' | 'register';
@@ -21,6 +22,8 @@ export type AuthFormField = {
 export type AuthViewModel = {
   mode: AuthMode;
   role: Role;
+  avatarId: string;
+  avatarOptions: readonly AvatarOption[];
   busy: boolean;
   error: string;
   submitLabel: string;
@@ -28,10 +31,12 @@ export type AuthViewModel = {
   nameField: AuthFormField;
   emailField: AuthFormField;
   passwordField: AuthFormField;
+  mfaCodeField: AuthFormField;
   teacherInviteCodeField: AuthFormField;
   submit: FormEventHandler<HTMLFormElement>;
   toggleMode: () => void;
   selectRole: (role: Role) => void;
+  selectAvatar: (avatarId: string) => void;
   startDemo: (role: Role) => void;
   forgotPassword: () => void;
 };

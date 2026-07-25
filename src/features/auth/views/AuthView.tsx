@@ -1,5 +1,5 @@
 import { PixelIcon } from '../../../shared-components/PixelIcon';
-import pixelWizard from '../../../assets/pixel-wizard.png';
+import pixelWizard from '../../../assets/pixel-wizard.webp';
 import type { AuthViewProps } from '../models/types';
 import { useAuthViewModel } from '../viewModels/useAuthViewModel';
 
@@ -37,11 +37,32 @@ export function AuthView(props: AuthViewProps) {
                 <button type="button" className={vm.role === 'student' ? 'active' : ''} onClick={() => vm.selectRole('student')}><PixelIcon name="book" /> Student</button>
                 <button type="button" className={vm.role === 'teacher' ? 'active' : ''} onClick={() => vm.selectRole('teacher')}><PixelIcon name="academy" /> Teacher</button>
               </div>
+              <fieldset className="avatar-picker">
+                <legend>Choose your {vm.role} character</legend>
+                <p>Your character will represent you around the academy.</p>
+                <div className="avatar-option-grid">
+                  {vm.avatarOptions.map((avatar) => (
+                    <label className={`avatar-option ${vm.avatarId === avatar.id ? 'selected' : ''}`} key={avatar.id}>
+                      <input
+                        type="radio"
+                        name="avatarId"
+                        value={avatar.id}
+                        checked={vm.avatarId === avatar.id}
+                        onChange={() => vm.selectAvatar(avatar.id)}
+                      />
+                      <span className="avatar-option-art"><img src={avatar.src} alt="" /></span>
+                      <strong>{avatar.label}</strong>
+                      <span className="avatar-option-check" aria-hidden><PixelIcon name="check" size={13} /></span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
               <label>Display name<input {...vm.nameField} maxLength={40} required autoComplete="name" /></label>
             </>
           )}
           <label>Email address<input type="email" {...vm.emailField} required autoComplete="email" /></label>
           <label>Password<input type="password" {...vm.passwordField} required minLength={8} autoComplete={vm.mode === 'login' ? 'current-password' : 'new-password'} /></label>
+          {vm.mode === 'login' && <label>Authenticator or recovery code <small>Only required when MFA is enabled.</small><input {...vm.mfaCodeField} autoComplete="one-time-code" maxLength={14} placeholder="123456 or XXXX-XXXX-XXXX" /></label>}
           {vm.mode === 'login' && <button type="button" className="auth-mode-link password-reset-link" onClick={vm.forgotPassword}>Forgot your password?</button>}
           {vm.mode === 'register' && vm.role === 'teacher' && <label>Teacher invite code <small>Required only when the academy administrator configured one.</small><input type="password" {...vm.teacherInviteCodeField} autoComplete="off" /></label>}
           {vm.error && <div className="form-error" role="alert"><PixelIcon name="close" size={16} /> {vm.error}</div>}

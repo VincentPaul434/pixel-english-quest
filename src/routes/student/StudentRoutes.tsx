@@ -15,8 +15,14 @@ export const studentRoutes: AppRoute[] = studentPages.map((page) => ({
 }));
 
 export function resolveStudentPage(pathname: string): StudentPage {
+  if (pathname.startsWith('/student/assignments/')) return 'assignments';
   const page = pathname.startsWith('/student/') ? pathname.slice('/student/'.length) as StudentPage : 'dashboard';
   return studentPages.includes(page) ? page : 'dashboard';
+}
+
+export function resolveStudentAssignmentId(pathname: string) {
+  const match = pathname.match(/^\/student\/assignments\/([^/]+)$/);
+  return match ? decodeURIComponent(match[1]) : null;
 }
 
 type StudentRoutesProps = {
@@ -27,5 +33,5 @@ type StudentRoutesProps = {
 };
 
 export function StudentRoutes({ user, pathname, onLogout, onNavigate }: StudentRoutesProps) {
-  return <StudentWorkspace initialUser={user} onLogout={onLogout} page={resolveStudentPage(pathname)} onNavigate={onNavigate} />;
+  return <StudentWorkspace initialUser={user} onLogout={onLogout} page={resolveStudentPage(pathname)} assignmentId={resolveStudentAssignmentId(pathname)} onNavigate={onNavigate} />;
 }

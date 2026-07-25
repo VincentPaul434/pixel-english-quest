@@ -1,12 +1,15 @@
+import { lazy } from 'react';
 import { ModalFrame } from '../../../shared-components/ModalFrame';
 import { PixelIcon, type PixelIconName } from '../../../shared-components/PixelIcon';
-import { LessonEditor } from '../../lessons';
-import pixelWizard from '../../../assets/pixel-wizard.png';
+import pixelWizard from '../../../assets/pixel-wizard.webp';
+import { avatarOptionFor } from '../../academy/models/avatars';
 import type { LessonAnalytics, TeacherCourse, TeacherDashboardData } from '../../academy/models/types';
 import type { AnnouncementFormProps, AssignmentFormProps, CourseFormProps, TeacherContentActions, TeacherModalProps, TeacherTab, TeacherWorkspaceViewProps } from '../models/types';
 import { useAnnouncementFormViewModel, useAssignmentFormViewModel, useCourseFormViewModel } from '../viewModels/useTeacherFormsViewModel';
 import { useTeacherWorkspaceViewModel } from '../viewModels/useTeacherWorkspaceViewModel';
-import { TeacherOperations } from '../../platform';
+
+const LessonEditor = lazy(() => import('../../lessons').then((module) => ({ default: module.LessonEditor })));
+const TeacherOperations = lazy(() => import('../../platform').then((module) => ({ default: module.TeacherOperations })));
 
 function Modal({ children, onClose, label, wide = false }: TeacherModalProps) {
   return <ModalFrame onClose={onClose} label={label} wide={wide} contentClassName="teacher-modal">{children}</ModalFrame>;
@@ -186,20 +189,22 @@ function CourseManager({ course, actions }: { course: TeacherCourse; actions: Pa
 }
 
 function LessonRow({ course, lesson, actions }: { course: TeacherCourse; lesson: TeacherCourse['lessons'][number]; actions: Parameters<typeof ContentView>[0]['actions'] }) {
+  const lessonIndex = course.lessons.findIndex((item) => item.id === lesson.id);
+
   return (
     <article>
       <span className={`lesson-type ${lesson.category}`}><PixelIcon name={lesson.category === 'grammar' ? 'grammar' : lesson.category === 'listening' ? 'headphones' : lesson.category === 'speaking' ? 'mic' : 'book'} /></span>
       <div><strong>{lesson.title}</strong><small>{lesson.category} - {lesson.difficulty} - {lesson.minutes} min - {lesson.questionCount} questions - {lesson.masteryScore}% mastery</small></div>
       <span className={`status-pill ${lesson.status}`}>{lesson.status}</span>
       <div className="row-actions">
-        <button onClick={() => actions.openEditor({ lessonId: lesson.id, courseId: course.id })} title="Edit"><PixelIcon name="pencil" /></button>
-        {lesson.status === 'draft' && <button onClick={() => actions.publishLesson(lesson.id)} title="Publish"><PixelIcon name="sparkle" /></button>}
-        {lesson.status === 'published' && <button onClick={() => actions.openAssignment({ course, lessonId: lesson.id })} title="Assign"><PixelIcon name="scroll" /></button>}
-        <button onClick={() => actions.openAnalytics(lesson.id)} title="Analytics"><PixelIcon name="brain" /></button>
-        <button onClick={() => actions.duplicateLesson(lesson.id)} title="Duplicate"><PixelIcon name="magic" /></button>
-        <button onClick={() => actions.moveLesson(course, lesson.id, -1)} title="Move up">↑</button>
-        <button onClick={() => actions.moveLesson(course, lesson.id, 1)} title="Move down">↓</button>
-        <button onClick={() => actions.archiveLesson(lesson.id)} className="danger" title="Archive"><PixelIcon name="close" /></button>
+        <button onClick={() => actions.openEditor({ lessonId: lesson.id, courseId: course.id })} aria-label={`Edit ${lesson.title}`} title="Edit"><PixelIcon name="pencil" /></button>
+        {lesson.status === 'draft' && <button onClick={() => actions.publishLesson(lesson.id)} aria-label={`Publish ${lesson.title}`} title="Publish"><PixelIcon name="sparkle" /></button>}
+        {lesson.status === 'published' && <button onClick={() => actions.openAssignment({ course, lessonId: lesson.id })} aria-label={`Assign ${lesson.title}`} title="Assign"><PixelIcon name="scroll" /></button>}
+        <button onClick={() => actions.openAnalytics(lesson.id)} aria-label={`View analytics for ${lesson.title}`} title="Analytics"><PixelIcon name="brain" /></button>
+        <button onClick={() => actions.duplicateLesson(lesson.id)} aria-label={`Duplicate ${lesson.title}`} title="Duplicate"><PixelIcon name="magic" /></button>
+        <button onClick={() => actions.moveLesson(course, lesson.id, -1)} disabled={lessonIndex <= 0} aria-label={`Move ${lesson.title} up`} title="Move up">↑</button>
+        <button onClick={() => actions.moveLesson(course, lesson.id, 1)} disabled={lessonIndex === course.lessons.length - 1} aria-label={`Move ${lesson.title} down`} title="Move down">↓</button>
+        <button onClick={() => actions.archiveLesson(lesson.id)} className="danger" aria-label={`Archive ${lesson.title}`} title="Archive"><PixelIcon name="close" /></button>
       </div>
     </article>
   );
@@ -258,6 +263,7 @@ export function TeacherWorkspaceView(props: TeacherWorkspaceViewProps) {
 
   if (error) return <main className="loading-screen"><h1>Teacher workspace unavailable</h1><p>{error}</p><button className="primary-button" onClick={() => window.location.reload()}>Try again</button></main>;
   if (!data) return <main className="loading-screen"><PixelIcon name="sparkle" size={58} /><p>Preparing the teacher workshop...</p></main>;
+  const avatar = avatarOptionFor(data.profile.avatarId, data.profile.role);
 
   return (
     <div className="teacher-shell">
@@ -265,16 +271,16 @@ export function TeacherWorkspaceView(props: TeacherWorkspaceViewProps) {
         <button className="icon-button menu-button" onClick={() => setMenuOpen(true)} aria-label="Open teacher menu"><PixelIcon name="menu" /></button>
         <button className="brand" onClick={() => setTab('overview')}><span className="brand-mark"><PixelIcon name="academy" /></span><span>English Pixel</span><i>Teacher</i></button>
         <nav className="teacher-top-nav">
-          {(['overview', 'content', 'students', 'assignments', 'operations'] as TeacherTab[]).map((item) => <button className={tab === item ? 'active' : ''} onClick={() => setTab(item)} key={item}>{item[0].toUpperCase() + item.slice(1)}</button>)}
+          {(['overview', 'content', 'students', 'assignments', 'operations'] as TeacherTab[]).map((item) => <button aria-current={tab === item ? 'page' : undefined} className={tab === item ? 'active' : ''} onClick={() => setTab(item)} key={item}>{item[0].toUpperCase() + item.slice(1)}</button>)}
         </nav>
         <div className="topbar-spacer" />
-        <button className="profile-trigger"><span className="mini-avatar"><img src={pixelWizard} alt="" /></span><span>{data.profile.name}</span><small>Teacher</small></button>
+        <div className="profile-trigger teacher-profile"><span className="mini-avatar"><img src={avatar.src} alt="" /></span><span>{data.profile.name}</span><small>Teacher</small></div>
         <button className="icon-button desktop-logout" onClick={onLogout} aria-label="Sign out"><PixelIcon name="logout" /></button>
       </header>
 
-      <aside className={`side-drawer ${menuOpen ? 'open' : ''}`}>
+      <aside className={`side-drawer ${menuOpen ? 'open' : ''}`} aria-hidden={!menuOpen} inert={menuOpen ? undefined : ''}>
         <div className="drawer-head"><span className="brand"><span className="brand-mark"><PixelIcon name="academy" /></span><span>Teacher</span><i>Workspace</i></span><button className="icon-button" onClick={() => setMenuOpen(false)} aria-label="Close teacher menu"><PixelIcon name="close" /></button></div>
-        <nav>{(['overview', 'content', 'students', 'assignments', 'operations'] as TeacherTab[]).map((item) => <button key={item} onClick={() => { setTab(item); setMenuOpen(false); }}><PixelIcon name={item === 'overview' ? 'home' : item === 'content' ? 'book' : item === 'students' ? 'profile' : item === 'operations' ? 'academy' : 'scroll'} /> {item[0].toUpperCase() + item.slice(1)}</button>)}</nav>
+        <nav>{(['overview', 'content', 'students', 'assignments', 'operations'] as TeacherTab[]).map((item) => <button aria-current={tab === item ? 'page' : undefined} className={tab === item ? 'active' : ''} key={item} onClick={() => { setTab(item); setMenuOpen(false); }}><PixelIcon name={item === 'overview' ? 'home' : item === 'content' ? 'book' : item === 'students' ? 'profile' : item === 'operations' ? 'academy' : 'scroll'} /> {item[0].toUpperCase() + item.slice(1)}</button>)}</nav>
         <button className="drawer-close" onClick={onLogout}><PixelIcon name="logout" /> Sign out</button>
       </aside>
       {menuOpen && <button className="scrim" onClick={() => setMenuOpen(false)} aria-label="Close teacher menu" />}

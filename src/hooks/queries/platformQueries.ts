@@ -21,7 +21,7 @@ export const adminQueryOptions = () => queryOptions({
 });
 
 export function usePlatformQuery() {
-  return useQuery(platformQueryOptions());
+  return useQuery({ ...platformQueryOptions(), refetchInterval: 30_000, refetchIntervalInBackground: false });
 }
 
 export function useInvitationQuery(code: string, enabled = true) {

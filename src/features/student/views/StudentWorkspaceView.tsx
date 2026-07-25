@@ -4,6 +4,7 @@ import { PixelIcon, type PixelIconName } from '../../../shared-components/PixelI
 import pixelWizard from '../../../assets/pixel-wizard.webp';
 import { categoryDetails } from '../student-constants';
 import { formatMinutes, iconForActivity } from '../student-formatters';
+import { avatarOptionFor } from '../../academy/models/avatars';
 import type {
   Category,
   VocabularyItem
@@ -18,11 +19,12 @@ const StudentAssignmentsView = lazy(() => import('./StudentAssignmentsView').the
 function ProfileEditor(props: ProfileEditorProps) {
   const { profile, onClose, onLogout, onReset } = props;
   const { busy, dailyGoal, error, learningGoal, name, proficiency, save, setDailyGoal, setLearningGoal, setName, setProficiency } = useProfileEditorViewModel(props);
+  const avatar = avatarOptionFor(profile.avatarId, profile.role);
 
   return (
     <ModalFrame onClose={onClose} label="learning profile" contentClassName="profile-modal">
       <form className="settings-form" onSubmit={save}>
-        <span className="profile-avatar large"><img src={pixelWizard} alt="" /></span>
+        <span className="profile-avatar large"><img src={avatar.src} alt="" /></span>
         <span className="overline">Learner settings</span>
         <h2>Shape your adventure</h2>
         <div className="form-grid two-columns">
@@ -182,6 +184,7 @@ export function StudentWorkspaceView({ initialUser, onLogout, page, assignmentId
   const isHubDemo = page === 'learning-hub' && data.profile.email === 'student@pixel.academy';
   const topbarStreak = isHubDemo ? Math.max(4, data.stats.streak) : data.stats.streak;
   const topbarLevel = isHubDemo ? Math.max(8, data.profile.level) : data.profile.level;
+  const avatar = avatarOptionFor(data.profile.avatarId, data.profile.role);
 
   return (
     <div className={`app-shell student-shell student-shell-${page}`}>
@@ -189,7 +192,7 @@ export function StudentWorkspaceView({ initialUser, onLogout, page, assignmentId
         <button className="icon-button menu-button" onClick={() => setMenuOpen(true)} aria-label="Open menu"><PixelIcon name="menu" /></button>
         <button className="brand" onClick={() => navigate('dashboard')}><span className="brand-mark"><PixelIcon name="academy" size={23} /></span><span>English Pixel</span><i>Academy</i></button>
         <div className="topbar-spacer" /><div className="streak-chip"><PixelIcon name="flame" size={15} /> {topbarStreak} day streak</div><div className="level-chip"><PixelIcon name="sparkle" size={14} /> LVL {topbarLevel}</div>
-        <button className="profile-trigger" onClick={() => setProfileOpen(true)} aria-label={`Open ${data.profile.name}'s learning profile`}><span className="mini-avatar"><img src={pixelWizard} alt="" /></span><span>{data.profile.name}</span><PixelIcon name="chevronDown" size={17} /></button>
+        <button className="profile-trigger" onClick={() => setProfileOpen(true)} aria-label={`Open ${data.profile.name}'s learning profile`}><span className="mini-avatar"><img src={avatar.src} alt="" /></span><span>{data.profile.name}</span><PixelIcon name="chevronDown" size={17} /></button>
       </header>
       <aside className={`side-drawer ${menuOpen ? 'open' : ''}`} aria-hidden={!menuOpen} inert={menuOpen ? undefined : ''}><div className="drawer-head"><span className="brand"><span className="brand-mark"><PixelIcon name="academy" /></span><span>English Pixel</span><i>Academy</i></span><button className="icon-button" onClick={() => setMenuOpen(false)} aria-label="Close menu"><PixelIcon name="close" /></button></div><nav><button aria-current={page === 'dashboard' ? 'page' : undefined} className={page === 'dashboard' ? 'active' : ''} onClick={() => navigate('dashboard')}><PixelIcon name="home" /> Dashboard</button><button aria-current={page === 'courses' ? 'page' : undefined} className={page === 'courses' ? 'active' : ''} onClick={() => navigate('courses')}><PixelIcon name="book" /> Courses & lessons</button><button aria-current={page === 'assignments' ? 'page' : undefined} className={page === 'assignments' ? 'active' : ''} onClick={() => navigate('assignments')}><PixelIcon name="scroll" /> Assignments</button><button aria-current={page === 'learning-hub' ? 'page' : undefined} className={page === 'learning-hub' ? 'active' : ''} onClick={() => navigate('learning-hub')}><PixelIcon name="academy" /> Learning hub</button><button aria-current={page === 'study' ? 'page' : undefined} className={page === 'study' ? 'active' : ''} onClick={() => navigate('study')}><PixelIcon name="brain" /> Study deck</button><button aria-current={page === 'achievements' ? 'page' : undefined} className={page === 'achievements' ? 'active' : ''} onClick={() => navigate('achievements')}><PixelIcon name="trophy" /> Achievements</button><button aria-current={page === 'activity' ? 'page' : undefined} className={page === 'activity' ? 'active' : ''} onClick={() => navigate('activity')}><PixelIcon name="magic" /> Activity</button></nav><div className="drawer-tip"><PixelIcon name="flame" size={34} /><strong>{data.profile.dailyGoal} minute daily goal</strong><small>{data.profile.learningGoal}</small></div><button className="drawer-close" onClick={onLogout}><PixelIcon name="logout" /> Sign out</button></aside>
       {menuOpen && <button className="scrim" onClick={() => setMenuOpen(false)} aria-label="Close menu" />}

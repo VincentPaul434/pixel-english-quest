@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import { ModalFrame } from '../../../shared-components/ModalFrame';
 import { PixelIcon, type PixelIconName } from '../../../shared-components/PixelIcon';
 import pixelWizard from '../../../assets/pixel-wizard.webp';
+import { avatarOptionFor } from '../../academy/models/avatars';
 import type { LessonAnalytics, TeacherCourse, TeacherDashboardData } from '../../academy/models/types';
 import type { AnnouncementFormProps, AssignmentFormProps, CourseFormProps, TeacherContentActions, TeacherModalProps, TeacherTab, TeacherWorkspaceViewProps } from '../models/types';
 import { useAnnouncementFormViewModel, useAssignmentFormViewModel, useCourseFormViewModel } from '../viewModels/useTeacherFormsViewModel';
@@ -262,6 +263,7 @@ export function TeacherWorkspaceView(props: TeacherWorkspaceViewProps) {
 
   if (error) return <main className="loading-screen"><h1>Teacher workspace unavailable</h1><p>{error}</p><button className="primary-button" onClick={() => window.location.reload()}>Try again</button></main>;
   if (!data) return <main className="loading-screen"><PixelIcon name="sparkle" size={58} /><p>Preparing the teacher workshop...</p></main>;
+  const avatar = avatarOptionFor(data.profile.avatarId, data.profile.role);
 
   return (
     <div className="teacher-shell">
@@ -272,7 +274,7 @@ export function TeacherWorkspaceView(props: TeacherWorkspaceViewProps) {
           {(['overview', 'content', 'students', 'assignments', 'operations'] as TeacherTab[]).map((item) => <button aria-current={tab === item ? 'page' : undefined} className={tab === item ? 'active' : ''} onClick={() => setTab(item)} key={item}>{item[0].toUpperCase() + item.slice(1)}</button>)}
         </nav>
         <div className="topbar-spacer" />
-        <div className="profile-trigger teacher-profile"><span className="mini-avatar"><img src={pixelWizard} alt="" /></span><span>{data.profile.name}</span><small>Teacher</small></div>
+        <div className="profile-trigger teacher-profile"><span className="mini-avatar"><img src={avatar.src} alt="" /></span><span>{data.profile.name}</span><small>Teacher</small></div>
         <button className="icon-button desktop-logout" onClick={onLogout} aria-label="Sign out"><PixelIcon name="logout" /></button>
       </header>
 

@@ -37,6 +37,26 @@ export function AuthView(props: AuthViewProps) {
                 <button type="button" className={vm.role === 'student' ? 'active' : ''} onClick={() => vm.selectRole('student')}><PixelIcon name="book" /> Student</button>
                 <button type="button" className={vm.role === 'teacher' ? 'active' : ''} onClick={() => vm.selectRole('teacher')}><PixelIcon name="academy" /> Teacher</button>
               </div>
+              <fieldset className="avatar-picker">
+                <legend>Choose your {vm.role} character</legend>
+                <p>Your character will represent you around the academy.</p>
+                <div className="avatar-option-grid">
+                  {vm.avatarOptions.map((avatar) => (
+                    <label className={`avatar-option ${vm.avatarId === avatar.id ? 'selected' : ''}`} key={avatar.id}>
+                      <input
+                        type="radio"
+                        name="avatarId"
+                        value={avatar.id}
+                        checked={vm.avatarId === avatar.id}
+                        onChange={() => vm.selectAvatar(avatar.id)}
+                      />
+                      <span className="avatar-option-art"><img src={avatar.src} alt="" /></span>
+                      <strong>{avatar.label}</strong>
+                      <span className="avatar-option-check" aria-hidden><PixelIcon name="check" size={13} /></span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
               <label>Display name<input {...vm.nameField} maxLength={40} required autoComplete="name" /></label>
             </>
           )}

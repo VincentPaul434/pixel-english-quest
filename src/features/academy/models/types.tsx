@@ -7,6 +7,7 @@ export interface User {
   email: string;
   name: string;
   role: Role;
+  avatarId: string;
   proficiency: string;
   learningGoal: string;
   dailyGoal: number;
